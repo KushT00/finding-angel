@@ -22,7 +22,8 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-
+# Load environment variables from .env file
+load_dotenv()
 # Update CORS configuration
 CORS(app, 
      resources={r"/api/*": {
@@ -47,23 +48,32 @@ def handle_preflight():
         
         return response
 
+
 # Initialize Firebase Admin if not already initialized
-if not firebase_admin._apps:
+
+firebase_credentials = os.getenv("FIREBASE_CREDENTIALS")
+
+if firebase_credentials:
     try:
-        cred = credentials.Certificate("findmyangel-b281e-firebase-adminsdk-fbsvc-a28b8ae335.json")  # Make sure this file exists in your root directory
-        firebase_admin.initialize_app(cred)
-        logger.info("Firebase Admin initialized successfully")
+        cred_dict = json.loads(firebase_credentials)
+        cred = credentials.Certificate(cred_dict)
+        
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred)
+            logger.info("Firebase Admin initialized successfully")
     except Exception as e:
         logger.error(f"Firebase Admin initialization error: {str(e)}")
         raise e
+else:
+    logger.error("FIREBASE_CREDENTIALS not found in .env file")
+    raise Exception("FIREBASE_CREDENTIALS not set")
 
 # Initialize Razorpay client
 razorpay_client = razorpay.Client(
     auth=(os.getenv('RAZORPAY_KEY_ID'), os.getenv('RAZORPAY_KEY_SECRET'))
 )
 
-# Load environment variables from .env file
-load_dotenv()
+
 
 # Initialize Firestore
 db = firestore.client()
