@@ -49,8 +49,12 @@ def handle_preflight():
         return response
 
 # Vercel requires this handler
-def handler(event, context):
-    return app(event, context)
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+app.wsgi_app = ProxyFix(app.wsgi_app)
+
+def handler(request, *args, **kwargs):
+    return app(request.environ, *args)
 
 @app.route('/test')
 def test():
