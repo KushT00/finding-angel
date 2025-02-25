@@ -1,14 +1,17 @@
+/* eslint-disable react/no-unescaped-entities */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDarkMode } from '../../../context/DarkModeContext';
 import { auth } from '../../../lib/firebase';
-import { 
-  ChevronLeft, 
-  Building, 
-  MapPin, 
-  Target, 
+import {
+  ChevronLeft,
+  Building,
+  MapPin,
+  Target,
   Calendar,
   DollarSign,
   Users,
@@ -72,7 +75,7 @@ export default function InvestorProfile() {
   const fetchAISummary = async () => {
     setIsLoadingSummary(true);
     setSummaryError(null);
-    
+
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -80,10 +83,16 @@ export default function InvestorProfile() {
         return;
       }
 
+      if (!params.id) {
+        throw new Error("Invalid investor ID");
+      }
+
       const token = await user.getIdToken();
-      const cleanId = params.id.toString().replace('http://', '')
-                                    .replace('https://', '')
-                                    .replace('www.', '');
+      const cleanId = params.id
+        ?.toString()
+        .replace('http://', '')
+        .replace('https://', '')
+        .replace('www.', '');
 
       console.log("Fetching AI summary for ID:", cleanId); // Debug log
 
@@ -106,7 +115,7 @@ export default function InvestorProfile() {
       if (!data.ai_summary) {
         throw new Error('No summary received from server');
       }
-      
+
       setAiSummary(data.ai_summary);
       setSummaryError(null);
     } catch (error: any) {
@@ -117,28 +126,35 @@ export default function InvestorProfile() {
     }
   };
 
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const user = auth.currentUser;
         if (!user) return;
-
+  
         const token = await user.getIdToken();
         const headers = {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         };
-
-        const cleanId = params.id.replace('http://', '')
-                                .replace('https://', '')
-                                .replace('www.', '');
-
+  
+        if (!params.id) {
+          throw new Error("Invalid investor ID");
+        }
+  
+        const cleanId = params.id
+          ?.toString()
+          .replace('http://', '')
+          .replace('https://', '')
+          .replace('www.', '');
+  
         // Use the regular endpoint since we want full data
-        const response = await fetch(`http://localhost:5000/api/investors/${cleanId}`, { 
+        const response = await fetch(`http://localhost:5000/api/investors/${cleanId}`, {
           headers,
           cache: 'no-store'
         });
-
+  
         if (!response.ok) {
           if (response.status === 403) {
             router.push('/credits');
@@ -146,27 +162,26 @@ export default function InvestorProfile() {
           }
           throw new Error(`Failed to fetch data`);
         }
-
+  
         const data = await response.json();
         setInvestor(data.investor);
         setDescription(data.description);
-        
+  
       } catch (error) {
         console.error('Error:', error);
       } finally {
         setLoading(false);
       }
     };
-
+  
     if (params.id) {
       fetchData().then(() => {
         // Only fetch AI summary after basic data is loaded
-        // This is where the single credit deduction will happen
         fetchAISummary();
       });
     }
-  }, [params.id, router]);
-
+  }, [fetchAISummary, params.id, router]);
+  
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -210,10 +225,10 @@ export default function InvestorProfile() {
       a.style.display = 'none';
       a.href = url;
       a.download = `${investor?.name || 'investor'}_profile.csv`;
-      
+
       document.body.appendChild(a);
       a.click();
-      
+
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
@@ -249,39 +264,35 @@ export default function InvestorProfile() {
           <div className="flex justify-between items-center mb-8">
             <button
               onClick={() => router.back()}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
-                darkMode 
-                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
-              } shadow-sm hover:shadow-md transition-all duration-200`}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${darkMode
+                ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+                } shadow-sm hover:shadow-md transition-all duration-200`}
             >
               <ChevronLeft size={16} />
               Back to Dashboard
             </button>
-            
+
             <div className="flex gap-2">
               <button
                 onClick={handleShare}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
-                  darkMode 
-                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
-                } shadow-sm hover:shadow-md transition-all duration-200`}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${darkMode
+                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  } shadow-sm hover:shadow-md transition-all duration-200`}
               >
                 <Share2 size={16} />
                 Share
               </button>
-              
+
               <button
                 onClick={handleDownload}
                 disabled={loading}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${
-                  darkMode 
-                    ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' 
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
-                } shadow-sm hover:shadow-md transition-all duration-200 ${
-                  loading ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${darkMode
+                  ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  } shadow-sm hover:shadow-md transition-all duration-200 ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   {loading ? (
@@ -299,7 +310,7 @@ export default function InvestorProfile() {
               </button>
             </div>
           </div>
-          
+
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
             <div className="space-y-4">
               <div className="transform transition-all duration-200 hover:translate-x-2">
@@ -310,57 +321,54 @@ export default function InvestorProfile() {
                   {formatValue(investor.company_name)}
                 </p>
               </div>
-              
+
               {/* Quick Info Pills */}
               <div className="flex flex-wrap gap-3 mt-4">
                 {investor.Fund_Type && (
-                  <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-                    darkMode ? 'bg-blue-900/30 text-blue-200' : 'bg-blue-100 text-blue-800'
-                  }`}>
+                  <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${darkMode ? 'bg-blue-900/30 text-blue-200' : 'bg-blue-100 text-blue-800'
+                    }`}>
                     {formatValue(investor.Fund_Type)}
                   </span>
                 )}
                 {investor.location?.[0] && (
-                  <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${
-                    darkMode ? 'bg-purple-900/30 text-purple-200' : 'bg-purple-100 text-purple-800'
-                  }`}>
+                  <span className={`px-4 py-1.5 rounded-full text-sm font-medium ${darkMode ? 'bg-purple-900/30 text-purple-200' : 'bg-purple-100 text-purple-800'
+                    }`}>
                     <MapPin size={14} className="inline mr-1" />
                     {formatValue(investor.location[0])}
                   </span>
                 )}
               </div>
             </div>
-            
+
             {/* Stats Cards */}
             <div className="grid grid-cols-3 gap-6">
               {[
-                { 
-                  value: formatValue(investor.No_Of_Investments, 'number'), 
-                  label: 'Investments', 
-                  icon: <Target size={20} />, 
-                  color: 'blue' 
+                {
+                  value: formatValue(investor.No_Of_Investments, 'number'),
+                  label: 'Investments',
+                  icon: <Target size={20} />,
+                  color: 'blue'
                 },
-                { 
-                  value: formatValue(investor.No_Of_Exits, 'number'), 
-                  label: 'Exits', 
-                  icon: <TrendingUp size={20} />, 
-                  color: 'green' 
+                {
+                  value: formatValue(investor.No_Of_Exits, 'number'),
+                  label: 'Exits',
+                  icon: <TrendingUp size={20} />,
+                  color: 'green'
                 },
-                { 
-                  value: formatValue(investor.Founding_Year, 'number'), 
-                  label: 'Founded', 
-                  icon: <Calendar size={20} />, 
-                  color: 'purple' 
+                {
+                  value: formatValue(investor.Founding_Year, 'number'),
+                  label: 'Founded',
+                  icon: <Calendar size={20} />,
+                  color: 'purple'
                 }
               ].map((stat, index) => (
-                <div 
+                <div
                   key={index}
                   className={`p-6 rounded-2xl transform transition-all duration-200 
-                    hover:scale-105 hover:shadow-xl ${
-                    darkMode 
-                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-750' 
+                    hover:scale-105 hover:shadow-xl ${darkMode
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-750'
                       : 'bg-white text-gray-600 hover:bg-gray-50'
-                  } shadow-lg`}
+                    } shadow-lg`}
                 >
                   <div className={`text-${stat.color}-500 mb-2`}>{stat.icon}</div>
                   <p className={`text-3xl font-bold text-${stat.color}-500 mb-1`}>
@@ -380,14 +388,13 @@ export default function InvestorProfile() {
         <div className={`mb-8 p-8 rounded-2xl shadow-lg transform transition-all duration-200 
           hover:shadow-xl ${darkMode ? 'bg-gray-800/80' : 'bg-white'}`}>
           <div className="flex items-center gap-3 mb-6">
-            <div className={`p-3 rounded-xl ${
-              darkMode ? 'bg-purple-900/30' : 'bg-purple-100'
-            }`}>
+            <div className={`p-3 rounded-xl ${darkMode ? 'bg-purple-900/30' : 'bg-purple-100'
+              }`}>
               <Sparkles className="text-purple-500" size={24} />
             </div>
             <h2 className="text-2xl font-bold">AI-Generated Summary</h2>
           </div>
-          
+
           {isLoadingSummary ? (
             <div className="space-y-3">
               <div className="flex items-center space-x-4 animate-pulse">
@@ -403,7 +410,7 @@ export default function InvestorProfile() {
           ) : summaryError ? (
             <div className="flex items-center gap-2 text-red-500">
               <span className="text-lg">{summaryError}</span>
-              <button 
+              <button
                 onClick={() => {
                   if (params.id) {
                     fetchAISummary();
@@ -416,11 +423,11 @@ export default function InvestorProfile() {
             </div>
           ) : (
             <div className={`relative ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              <div className="absolute -left-4 top-0 text-4xl opacity-20">"</div>
+              <div className="absolute -left-4 top-0 text-4xl opacity-20">&quot;</div>
               <p className="text-lg leading-relaxed pl-4">
                 {aiSummary}
               </p>
-              <div className="absolute -right-4 bottom-0 text-4xl opacity-20">"</div>
+              <div className="absolute -right-4 bottom-0 text-4xl opacity-20">&quot;</div>
             </div>
           )}
         </div>
@@ -451,7 +458,7 @@ export default function InvestorProfile() {
                 </div>
                 <h2 className="text-2xl font-bold">Investment Focus</h2>
               </div>
-              
+
               <div className="space-y-8">
                 {/* Investment Stages */}
                 {formatValue(investor.stage, 'array').length > 0 && (
@@ -463,9 +470,8 @@ export default function InvestorProfile() {
                       {formatValue(investor.stage, 'array').map((stage: string, index: number) => (
                         <span
                           key={index}
-                          className={`px-4 py-2 rounded-full text-sm font-medium ${
-                            darkMode ? 'bg-blue-900/30 text-blue-200' : 'bg-blue-100 text-blue-800'
-                          }`}
+                          className={`px-4 py-2 rounded-full text-sm font-medium ${darkMode ? 'bg-blue-900/30 text-blue-200' : 'bg-blue-100 text-blue-800'
+                            }`}
                         >
                           {stage}
                         </span>
@@ -484,9 +490,8 @@ export default function InvestorProfile() {
                       {formatValue(investor.fund_focus, 'array').map((focus: string, index: number) => (
                         <span
                           key={index}
-                          className={`px-4 py-2 rounded-full text-sm font-medium ${
-                            darkMode ? 'bg-green-900/30 text-green-200' : 'bg-green-100 text-green-800'
-                          }`}
+                          className={`px-4 py-2 rounded-full text-sm font-medium ${darkMode ? 'bg-green-900/30 text-green-200' : 'bg-green-100 text-green-800'
+                            }`}
                         >
                           {focus}
                         </span>
@@ -508,12 +513,11 @@ export default function InvestorProfile() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {formatValue(investor.portfolio_Companies, 'array').map((company: { foreignRowDisplayName: string }, index: number) => (
-                    <div 
+                    <div
                       key={index}
                       className={`p-4 rounded-xl transform transition-all duration-200 
-                        hover:scale-105 hover:shadow-lg ${
-                        darkMode 
-                          ? 'bg-gray-700/50 text-gray-200 hover:bg-gray-700' 
+                        hover:scale-105 hover:shadow-lg ${darkMode
+                          ? 'bg-gray-700/50 text-gray-200 hover:bg-gray-700'
                           : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                         } border ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}
                     >
@@ -536,17 +540,16 @@ export default function InvestorProfile() {
                   </div>
                   <h2 className="text-2xl font-bold">Contact</h2>
                 </div>
-                
+
                 <div className="space-y-4">
                   {formatValue(investor.website) && (
-                    <a 
+                    <a
                       href={formatWebsiteUrl(investor.website)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`flex items-center gap-3 p-4 rounded-xl transform transition-all duration-200 
-                        hover:scale-102 hover:shadow-md ${
-                        darkMode 
-                          ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-200' 
+                        hover:scale-102 hover:shadow-md ${darkMode
+                          ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-200'
                           : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
                         } border ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}
                     >
@@ -554,14 +557,13 @@ export default function InvestorProfile() {
                       <span className="text-sm">{formatValue(investor.website)}</span>
                     </a>
                   )}
-                  
+
                   {formatValue(investor.email) && (
-                    <a 
+                    <a
                       href={`mailto:${formatValue(investor.email)}`}
                       className={`flex items-center gap-3 p-4 rounded-xl transform transition-all duration-200 
-                        hover:scale-102 hover:shadow-md ${
-                        darkMode 
-                          ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-200' 
+                        hover:scale-102 hover:shadow-md ${darkMode
+                          ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-200'
                           : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
                         } border ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}
                     >
@@ -581,23 +583,22 @@ export default function InvestorProfile() {
                 </div>
                 <h2 className="text-2xl font-bold">Social Media</h2>
               </div>
-              
+
               <div className="space-y-4">
                 {investor.Linkedin && (
-                  <a 
+                  <a
                     href={investor.Linkedin}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`flex items-center gap-3 p-4 rounded-xl transform transition-all duration-200 
-                      hover:scale-102 hover:shadow-md ${
-                      darkMode 
-                        ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-200' 
+                      hover:scale-102 hover:shadow-md ${darkMode
+                        ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-200'
                         : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
                       } border ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}
                   >
                     <div className={`p-2 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
                       <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                        <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                       </svg>
                     </div>
                     <span className="font-medium">LinkedIn Profile</span>
@@ -605,20 +606,19 @@ export default function InvestorProfile() {
                 )}
 
                 {investor.twitter && (
-                  <a 
+                  <a
                     href={investor.twitter}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`flex items-center gap-3 p-4 rounded-xl transform transition-all duration-200 
-                      hover:scale-102 hover:shadow-md ${
-                      darkMode 
-                        ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-200' 
+                      hover:scale-102 hover:shadow-md ${darkMode
+                        ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-200'
                         : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
                       } border ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}
                   >
                     <div className={`p-2 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
                       <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                        <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
                       </svg>
                     </div>
                     <span className="font-medium">Twitter Profile</span>
@@ -626,20 +626,19 @@ export default function InvestorProfile() {
                 )}
 
                 {investor.Facebook_Link && (
-                  <a 
+                  <a
                     href={investor.Facebook_Link}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`flex items-center gap-3 p-4 rounded-xl transform transition-all duration-200 
-                      hover:scale-102 hover:shadow-md ${
-                      darkMode 
-                        ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-200' 
+                      hover:scale-102 hover:shadow-md ${darkMode
+                        ? 'bg-gray-700/50 hover:bg-gray-700 text-gray-200'
                         : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
                       } border ${darkMode ? 'border-gray-600' : 'border-gray-200'}`}
                   >
                     <div className={`p-2 rounded-lg ${darkMode ? 'bg-blue-900/30' : 'bg-blue-100'}`}>
                       <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                       </svg>
                     </div>
                     <span className="font-medium">Facebook Profile</span>
@@ -654,22 +653,22 @@ export default function InvestorProfile() {
       {/* Share Success Toast */}
       {showShareToast && (
         <div className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg transform transition-all duration-300 
-          ${darkMode 
-            ? 'bg-green-900/90 text-white' 
+          ${darkMode
+            ? 'bg-green-900/90 text-white'
             : 'bg-green-50 text-green-900'
           } border ${darkMode ? 'border-green-700' : 'border-green-200'}`}
         >
           <div className="flex items-center gap-3">
-            <svg 
-              className={`w-5 h-5 ${darkMode ? 'text-green-300' : 'text-green-600'}`} 
-              fill="none" 
-              stroke="currentColor" 
+            <svg
+              className={`w-5 h-5 ${darkMode ? 'text-green-300' : 'text-green-600'}`}
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
                 d="M5 13l4 4L19 7"
               />
             </svg>
@@ -679,11 +678,11 @@ export default function InvestorProfile() {
                 Profile URL copied to clipboard
               </p>
             </div>
-            <button 
+            <button
               onClick={() => setShowShareToast(false)}
               className={`ml-4 p-1 rounded-full 
-                ${darkMode 
-                  ? 'hover:bg-green-800 text-green-200' 
+                ${darkMode
+                  ? 'hover:bg-green-800 text-green-200'
                   : 'hover:bg-green-100 text-green-600'
                 } transition-colors`}
             >
@@ -698,8 +697,8 @@ export default function InvestorProfile() {
       {/* Download Reminder Toast */}
       {showDownloadReminder && (
         <div className={`fixed bottom-4 right-4 p-4 rounded-lg shadow-lg transform transition-all duration-300 
-          ${darkMode 
-            ? 'bg-blue-900/90 text-white' 
+          ${darkMode
+            ? 'bg-blue-900/90 text-white'
             : 'bg-blue-50 text-blue-900'
           } border ${darkMode ? 'border-blue-700' : 'border-blue-200'}`}
         >
@@ -711,11 +710,11 @@ export default function InvestorProfile() {
                 You can download this investor's data for offline use.
               </p>
             </div>
-            <button 
+            <button
               onClick={() => setShowDownloadReminder(false)}
               className={`ml-4 p-1 rounded-full 
-                ${darkMode 
-                  ? 'hover:bg-blue-800 text-blue-200' 
+                ${darkMode
+                  ? 'hover:bg-blue-800 text-blue-200'
                   : 'hover:bg-blue-100 text-blue-600'
                 } transition-colors`}
             >

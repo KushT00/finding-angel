@@ -1,17 +1,24 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import { useState, useEffect } from "react";
-import Image from "next/image";
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signOut  } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useRouter } from 'next/navigation';
 
+
 const provider = new GoogleAuthProvider();
 
 export default function Home() {
+  // Define User Type
+  type User = {
+    name: string;
+    picture: string;
+  };
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [darkMode, setDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,7 +43,7 @@ export default function Home() {
             },
             credentials: 'include',
           });
-          
+
           if (response.ok) {
             const userData = await response.json();
             setUser(userData);
@@ -62,11 +69,11 @@ export default function Home() {
     try {
       setIsLoading(true);
       const result = await signInWithPopup(auth, provider);
-      
+
       // Add/Update user in Firestore
       const userRef = doc(db, 'users', result.user.uid);
       const userDoc = await getDoc(userRef);
-      
+
       if (!userDoc.exists()) {
         // Create new user document if it doesn't exist
         await setDoc(userRef, {
@@ -80,7 +87,7 @@ export default function Home() {
 
       // Redirect to dashboard after successful sign in
       router.push('/dashboard');
-      
+
     } catch (error) {
       console.error('Error signing in:', error);
     } finally {
@@ -112,16 +119,16 @@ export default function Home() {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-500 rounded-xl blur-md opacity-75 group-hover:opacity-100 transition duration-300"></div>
                 <div className="relative bg-gradient-to-r from-indigo-600 to-blue-500 text-white p-2.5 rounded-xl shadow-lg">
-                  <svg 
-                    className="w-6 h-6" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2.5" 
-                    strokeLinecap="round" 
+                  <svg
+                    className="w-6 h-6"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
                     strokeLinejoin="round"
                   >
-                    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+                    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
                   </svg>
                 </div>
               </div>
@@ -177,9 +184,9 @@ export default function Home() {
                 </button>
               ) : (
                 <div className="flex items-center space-x-4">
-                  <img 
-                    src={user.picture} 
-                    alt={user.name}
+                  <img
+                    src={user?.picture || "/default-avatar.png"}
+                    alt={user?.name || "User"}
                     className="w-8 h-8 rounded-full"
                   />
                   <button
@@ -205,7 +212,7 @@ export default function Home() {
                 Find <span className="text-indigo-600">2200+ investors</span> ready to fund your startup idea
               </div>
             </h1>
-            
+
             <p className={`text-xl md:text-2xl mb-12 leading-relaxed ${darkMode ? 'text-gray-300' : 'text-gray-600'}`} style={{ fontFamily: "'Inter', sans-serif" }}>
               Search and connect with top angel investors and VCs worldwide
             </p>
@@ -238,13 +245,13 @@ export default function Home() {
         </div>
       </div>
 
-        {/* Fundraising Comparison Section */}
-        <div className={`py-20 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+      {/* Fundraising Comparison Section */}
+      <div className={`py-20 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
         <div className="container mx-auto px-6">
           <h2 className={`text-3xl font-bold text-center mb-16 ${darkMode ? 'text-white' : 'text-gray-900'}`} style={{ fontFamily: '"Monomakh", serif' }}>
             Traditional fundraising <span className="text-indigo-600">v/s</span> Modern fundraising
           </h2>
-          
+
           <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
             {/* Traditional Fundraising */}
             <div className={`p-8 rounded-2xl border ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
@@ -467,7 +474,7 @@ export default function Home() {
                   Priority support
                 </li>
               </ul>
-              <button  className="w-full py-3 rounded-lg font-medium bg-gradient-to-r from-indigo-600 to-blue-500 text-white hover:from-indigo-700 hover:to-blue-600 transition-all duration-200" onClick={handleSignIn}>
+              <button className="w-full py-3 rounded-lg font-medium bg-gradient-to-r from-indigo-600 to-blue-500 text-white hover:from-indigo-700 hover:to-blue-600 transition-all duration-200" onClick={handleSignIn}>
                 Get Started
               </button>
             </div>
@@ -525,19 +532,19 @@ export default function Home() {
         </div>
       </div>
 
-    
+
       {/* FAQ Section */}
       <div id="faq" className={`py-20 ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
         <div className="container px-4 mx-auto">
           <h2 className={`text-3xl md:text-4xl font-bold text-center mb-12 md:mb-16 ${darkMode ? 'text-white' : 'text-[#121212]'}`} style={{ fontFamily: '"Monomakh", serif' }}>
             FAQ
           </h2>
-          
+
           <div className="max-w-2xl mx-auto">
             <div className="space-y-4">
               {(() => {
                 const [openIndex, setOpenIndex] = useState(0); // Track which FAQ is open
-                
+
                 const faqs = [
                   {
                     question: "How much do these investors invest?",
@@ -559,31 +566,30 @@ export default function Home() {
 
                 return faqs.map((faq, index) => (
                   <div key={index} className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                    <button 
+                    <button
                       onClick={() => setOpenIndex(openIndex === index ? -1 : index)}
                       className="flex items-center justify-between w-full py-4 text-left transition-colors duration-200 hover:text-indigo-600"
                     >
                       <span className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} hover:text-indigo-600 transition-colors duration-200`}>
                         {faq.question}
                       </span>
-                      <svg 
+                      <svg
                         className={`w-6 h-6 transition-transform duration-200 ${openIndex === index ? 'rotate-180' : ''} ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}
-                        fill="none" 
-                        stroke="currentColor" 
+                        fill="none"
+                        stroke="currentColor"
                         viewBox="0 0 24 24"
                       >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth="2" 
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
                           d="M19 9l-7 7-7-7"
                         />
                       </svg>
                     </button>
-                    <div 
-                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                        openIndex === index ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
-                      }`}
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${openIndex === index ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+                        }`}
                     >
                       <div className={`pb-4 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                         {faq.answer}
@@ -605,14 +611,14 @@ export default function Home() {
               Get in Touch
             </h2>
             <p className={`text-center mb-12 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-              Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+              Have questions? We&apos;d love to hear from you. Send us a message and we&apos;ll respond as soon as possible.
             </p>
-            
+
             <div className={`p-8 rounded-2xl shadow-lg ${darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white border border-gray-100'}`}>
               <form onSubmit={async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target as HTMLFormElement);
-                
+
                 try {
                   const response = await fetch('http://localhost:5000/api/contact', {
                     method: 'POST',
@@ -650,11 +656,10 @@ export default function Home() {
                       name="name"
                       required
                       placeholder="Your name"
-                      className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
-                        darkMode 
-                          ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400' 
-                          : 'bg-gray-50 border-gray-200 placeholder-gray-400'
-                      }`}
+                      className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${darkMode
+                        ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400'
+                        : 'bg-gray-50 border-gray-200 placeholder-gray-400'
+                        }`}
                     />
                   </div>
                   <div>
@@ -667,15 +672,14 @@ export default function Home() {
                       name="email"
                       required
                       placeholder="you@example.com"
-                      className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
-                        darkMode 
-                          ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400' 
-                          : 'bg-gray-50 border-gray-200 placeholder-gray-400'
-                      }`}
+                      className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${darkMode
+                        ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400'
+                        : 'bg-gray-50 border-gray-200 placeholder-gray-400'
+                        }`}
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Subject</span>
@@ -686,14 +690,13 @@ export default function Home() {
                     name="subject"
                     required
                     placeholder="What is this about?"
-                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
-                      darkMode 
-                        ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400' 
-                        : 'bg-gray-50 border-gray-200 placeholder-gray-400'
-                    }`}
+                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${darkMode
+                      ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400'
+                      : 'bg-gray-50 border-gray-200 placeholder-gray-400'
+                      }`}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Message</span>
@@ -704,14 +707,13 @@ export default function Home() {
                     required
                     rows={6}
                     placeholder="Your message here..."
-                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${
-                      darkMode 
-                        ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400' 
-                        : 'bg-gray-50 border-gray-200 placeholder-gray-400'
-                    }`}
+                    className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 transition-all duration-200 ${darkMode
+                      ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400'
+                      : 'bg-gray-50 border-gray-200 placeholder-gray-400'
+                      }`}
                   ></textarea>
                 </div>
-                
+
                 <div className="flex items-center justify-between pt-4">
                   <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     <span className="text-red-500">*</span> Required fields
@@ -740,7 +742,7 @@ export default function Home() {
                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-500 rounded-xl blur-md opacity-75 group-hover:opacity-100 transition duration-300"></div>
                   <div className="relative bg-gradient-to-r from-indigo-600 to-blue-500 text-white p-2.5 rounded-xl shadow-lg">
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/>
+                      <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
                     </svg>
                   </div>
                 </div>
@@ -759,13 +761,13 @@ export default function Home() {
                 <a href="#" className={`${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition duration-150`}>
                   <span className="sr-only">Twitter</span>
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/>
+                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
                   </svg>
                 </a>
                 <a href="https://www.linkedin.com/company/findmyangel" className={`${darkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition duration-150`}>
                   <span className="sr-only">LinkedIn</span>
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                   </svg>
                 </a>
               </div>
@@ -776,7 +778,7 @@ export default function Home() {
               <h3 className={`text-lg font-semibold mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Quick Links</h3>
               <ul className={`space-y-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 <li>
-                  <button 
+                  <button
                     onClick={() => {
                       const faqSection = document.getElementById('faq');
                       if (faqSection) faqSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -787,7 +789,7 @@ export default function Home() {
                   </button>
                 </li>
                 <li>
-                  <button 
+                  <button
                     onClick={() => {
                       const pricingSection = document.getElementById('pricing');
                       if (pricingSection) pricingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -809,14 +811,14 @@ export default function Home() {
               <ul className={`space-y-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                 <li className="flex items-center">
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   support@findmyangel.com
                 </li>
                 <li className="flex items-center">
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                   Mumbai, India
                 </li>
@@ -833,23 +835,23 @@ export default function Home() {
               <div className={`mt-4 md:mt-0 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} flex flex-wrap items-center justify-center gap-1.5`}>
                 <span>Made with</span>
                 <svg className="w-4 h-4 text-red-500 inline-block" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                 </svg>
                 <span>by</span>
                 <div className="flex items-center gap-1.5">
-                  <a 
-                    href="https://www.linkedin.com/in/madhav0x1d" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    href="https://www.linkedin.com/in/madhav0x1d"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-indigo-500 hover:text-indigo-600 transition-colors duration-200 hover:underline"
                   >
                     Madhav Shah
                   </a>
                   <span>&</span>
-                  <a 
-                    href="https://www.linkedin.com/in/kush-tejani-42b109271" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+                  <a
+                    href="https://www.linkedin.com/in/kush-tejani-42b109271"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-indigo-500 hover:text-indigo-600 transition-colors duration-200 hover:underline"
                   >
                     Kush Tejani

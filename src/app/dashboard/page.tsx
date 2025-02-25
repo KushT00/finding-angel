@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { useEffect, useState } from 'react';
 import { auth } from '../../lib/firebase';
@@ -7,6 +10,9 @@ import { doc, getDoc, setDoc, Timestamp, collection, addDoc, serverTimestamp } f
 import { db } from '../../lib/firebase';
 import { useDarkMode } from '../../context/DarkModeContext';
 import { toast } from 'react-hot-toast';
+import { User } from 'firebase/auth';
+import Razorpay from 'razorpay';
+
 
 interface Investor {
   id: string;
@@ -23,6 +29,13 @@ interface Investor {
   No_Of_Investments: string;
   Fund_Type: string;
 }
+
+interface PaymentPlan {
+  id: string;
+  name: string;
+  price: number;
+  credits: number;
+};
 
 interface Stats {
   total_investors: number;
@@ -43,6 +56,12 @@ interface UserCredits {
   total: number;
 }
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 interface AdvancedFilters {
   stages: string[];
   fund_types: string[];
@@ -56,6 +75,30 @@ interface AdvancedFilters {
   };
   industries: string[];
 }
+
+type RazorpayOptions = {
+  key: string;
+  amount: number;
+  currency: string;
+  name: string;
+  description: string;
+  order_id: string;
+  handler: (response: {
+    razorpay_payment_id: string;
+    razorpay_order_id: string;
+    razorpay_signature: string;
+  }) => void;
+  prefill: {
+    name: string;
+    email: string;
+  };
+  theme: {
+    color: string;
+  };
+  modal?: {
+    ondismiss?: () => void;
+  };
+};
 
 // Add new interface for community form
 interface CommunityFormData {
@@ -87,7 +130,7 @@ const RAZORPAY_KEY = "rzp_test_KsZM1Alo8MufnE"; // Replace with your test key
 
 export default function Dashboard() {
   const { darkMode, toggleDarkMode } = useDarkMode();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [investors, setInvestors] = useState<Investor[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [credits, setCredits] = useState<UserCredits>({ total: 0 });
@@ -120,544 +163,614 @@ export default function Dashboard() {
   });
   const router = useRouter();
 
-  const fetchData = async (token: string) => {
-    try {
-      console.log('Fetching data with filters:', { searchQuery, selectedLocation, selectedIndustry });
-      
-      const params = new URLSearchParams();
-      
-      if (searchQuery.trim()) {
-        params.append('search', searchQuery.trim());
-      }
-      if (selectedLocation) {
-        params.append('location', selectedLocation);
-      }
-      if (selectedIndustry) {
-        params.append('industry', selectedIndustry);
-      }
+// Helper function to get authenticated user token
+const getUserToken = async () => {
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+  return user.getIdToken();
+};
 
-      const baseUrl = 'http://localhost:5000/api/investors';
-      const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
-
-      console.log('Fetching from URL:', url);
-
-      const [investorsResponse, statsResponse] = await Promise.all([
-        fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch('http://localhost:5000/api/investors/stats', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        })
-      ]);
-
-      if (!investorsResponse.ok) {
-        throw new Error(`Investors response error: ${investorsResponse.status}`);
-      }
-      if (!statsResponse.ok) {
-        throw new Error(`Stats response error: ${statsResponse.status}`);
-      }
-
-      const investorsData = await investorsResponse.json();
-      const statsData = await statsResponse.json();
-
-      console.log('Received investors:', investorsData.length);
-      console.log('Received stats:', statsData);
-
-      setInvestors(investorsData);
-      setStats(statsData);
-      setCurrentPage(1);
-    } catch (error) {
-      console.error('Error in fetchData:', error);
-      // Optionally show error to user
-      // toast.error('Failed to load investors data');
-    } finally {
-      setLoading(false);
+const fetchData = async (token: string) => {
+  try {
+    console.log('Fetching data with filters:', { searchQuery, selectedLocation, selectedIndustry });
+    
+    const params = new URLSearchParams();
+    
+    if (searchQuery.trim()) {
+      params.append('search', searchQuery.trim());
     }
-  };
+    if (selectedLocation) {
+      params.append('location', selectedLocation);
+    }
+    if (selectedIndustry) {
+      params.append('industry', selectedIndustry);
+    }
 
-  const applyAdvancedFilters = async () => {
-    setLoading(true);
-    try {
-      const token = await user.getIdToken();
-      console.log('Sending filters:', advancedFilters); // Debug log
+    const baseUrl = 'http://localhost:5000/api/investors';
+    const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
 
-      const response = await fetch('http://localhost:5000/api/investors/advanced', {
-        method: 'POST',
+    console.log('Fetching from URL:', url);
+
+    const [investorsResponse, statsResponse] = await Promise.all([
+      fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(advancedFilters)
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('Received data:', data); // Debug log
-      setInvestors(data);
-      setCurrentPage(1); // Reset to first page when filters change
-    } catch (error) {
-      console.error('Error applying advanced filters:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+        }
+      }),
+      fetch('http://localhost:5000/api/investors/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+    ]);
 
-  const resetFilters = async () => {
-    setAdvancedFilters({
-      stages: [],
-      fund_types: [],
-      investment_range: {},
-      exits_range: {},
-      industries: []
+    if (!investorsResponse.ok) {
+      throw new Error(`Investors response error: ${investorsResponse.status}`);
+    }
+    if (!statsResponse.ok) {
+      throw new Error(`Stats response error: ${statsResponse.status}`);
+    }
+
+    const investorsData = await investorsResponse.json();
+    const statsData = await statsResponse.json();
+
+    console.log('Received investors:', investorsData.length);
+    console.log('Received stats:', statsData);
+
+    setInvestors(investorsData);
+    setStats(statsData);
+    setCurrentPage(1);
+  } catch (error) {
+    console.error('Error in fetchData:', error);
+    // Optionally show error to user
+    toast.error('Failed to load investors data');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const applyAdvancedFilters = async () => {
+  setLoading(true);
+  try {
+    // Check if user is authenticated
+    if (!user) {
+      toast.error('Please log in to apply filters');
+      setLoading(false);
+      return;
+    }
+
+    const token = await user.getIdToken();
+    console.log('Sending filters:', advancedFilters); // Debug log
+
+    const response = await fetch('http://localhost:5000/api/investors/advanced', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(advancedFilters)
     });
     
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Received data:', data); // Debug log
+    setInvestors(data);
+    setCurrentPage(1); // Reset to first page when filters change
+  } catch (error) {
+    console.error('Error applying advanced filters:', error);
+    toast.error('Failed to apply filters');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const resetFilters = async () => {
+  setAdvancedFilters({
+    stages: [],
+    fund_types: [],
+    investment_range: {},
+    exits_range: {},
+    industries: []
+  });
+  
+  // Check if user is authenticated
+  if (!user) {
+    toast.error('Please log in to view investors');
+    return;
+  }
+  
+  try {
     // Fetch original data
     const token = await user.getIdToken();
     fetchData(token);
     setCurrentPage(1);
-  };
+  } catch (error) {
+    console.error('Error resetting filters:', error);
+    toast.error('Failed to reset filters');
+  }
+};
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevent form submission
-    if (!user) return;
+const handleSearch = async (e: React.FormEvent) => {
+  e.preventDefault(); // Prevent form submission
+  
+  if (!user) {
+    toast.error('Please log in to search');
+    return;
+  }
 
-    setIsSearching(true);
-    try {
-      const token = await user.getIdToken();
-      await fetchData(token);
-    } catch (error) {
-      console.error('Error during search:', error);
-    } finally {
-      setIsSearching(false);
+  setIsSearching(true);
+  try {
+    const token = await user.getIdToken();
+    await fetchData(token);
+  } catch (error) {
+    console.error('Error during search:', error);
+    toast.error('Search failed');
+  } finally {
+    setIsSearching(false);
+  }
+};
+
+const handleLocationChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const newLocation = e.target.value;
+  
+  // Immediately update UI
+  setSelectedLocation(newLocation);
+  setLoading(true);
+  
+  // Clear previous location data
+  setInvestors([]); 
+  
+  if (!user) {
+    toast.error('Please log in to filter by location');
+    setLoading(false);
+    return;
+  }
+  
+  try {
+    const token = await user.getIdToken();
+    // Create URL with new location
+    const params = new URLSearchParams();
+    
+    if (searchQuery.trim()) {
+      params.append('search', searchQuery.trim());
     }
-  };
+    if (newLocation) { // Use newLocation instead of selectedLocation
+      params.append('location', newLocation);
+    }
+    if (selectedIndustry) {
+      params.append('industry', selectedIndustry);
+    }
 
-  const handleLocationChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newLocation = e.target.value;
-    
-    // Immediately update UI
-    setSelectedLocation(newLocation);
-    setLoading(true);
-    
-    // Clear previous location data
-    setInvestors([]); 
-    
-    if (user) {
-      try {
-        const token = await user.getIdToken();
-        // Create URL with new location
-        const params = new URLSearchParams();
-        
-        if (searchQuery.trim()) {
-          params.append('search', searchQuery.trim());
-        }
-        if (newLocation) { // Use newLocation instead of selectedLocation
-          params.append('location', newLocation);
-        }
-        if (selectedIndustry) {
-          params.append('industry', selectedIndustry);
-        }
+    const baseUrl = 'http://localhost:5000/api/investors';
+    const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
 
-        const baseUrl = 'http://localhost:5000/api/investors';
-        const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
-
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`Location filter error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        setInvestors(data);
-        setCurrentPage(1);
-      } catch (error) {
-        console.error('Error applying location filter:', error);
-        // Reset location if there's an error
-        setSelectedLocation('');
-      } finally {
-        setLoading(false);
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Location filter error: ${response.status}`);
     }
-  };
 
-  const handleIndustryChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newIndustry = e.target.value;
+    const data = await response.json();
+    setInvestors(data);
+    setCurrentPage(1);
+  } catch (error) {
+    console.error('Error applying location filter:', error);
+    toast.error('Failed to filter by location');
+    // Reset location if there's an error
+    setSelectedLocation('');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleIndustryChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const newIndustry = e.target.value;
+  
+  // Immediately update UI
+  setSelectedIndustry(newIndustry);
+  setLoading(true);
+  
+  // Clear previous data
+  setInvestors([]);
+  
+  if (!user) {
+    toast.error('Please log in to filter by industry');
+    setLoading(false);
+    return;
+  }
+  
+  try {
+    const token = await user.getIdToken();
+    const params = new URLSearchParams();
     
-    // Immediately update UI
-    setSelectedIndustry(newIndustry);
-    setLoading(true);
-    
-    // Clear previous data
-    setInvestors([]);
-    
-    if (user) {
-      try {
-        const token = await user.getIdToken();
-        const params = new URLSearchParams();
-        
-        if (searchQuery.trim()) {
-          params.append('search', searchQuery.trim());
-        }
-        if (selectedLocation) {
-          params.append('location', selectedLocation);
-        }
-        if (newIndustry) {
-          params.append('industry', newIndustry);
-        }
+    if (searchQuery.trim()) {
+      params.append('search', searchQuery.trim());
+    }
+    if (selectedLocation) {
+      params.append('location', selectedLocation);
+    }
+    if (newIndustry) {
+      params.append('industry', newIndustry);
+    }
 
-        const baseUrl = 'http://localhost:5000/api/investors';
-        const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+    const baseUrl = 'http://localhost:5000/api/investors';
+    const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
 
-        console.log('Fetching with industry filter:', newIndustry);
+    console.log('Fetching with industry filter:', newIndustry);
 
-        const response = await fetch(url, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`Industry filter error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log(`Found ${data.length} investors for industry: ${newIndustry}`);
-        setInvestors(data);
-        setCurrentPage(1);
-      } catch (error) {
-        console.error('Error applying industry filter:', error);
-        setSelectedIndustry('');
-      } finally {
-        setLoading(false);
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
       }
-    }
-  };
+    });
 
-  const handleViewProfile = (investor: any) => {
-    if (credits.total === 0) {
-      setShowCreditModal(true);
-    } else {
-      router.push(`/investor/${encodeURIComponent(investor.id)}`);
+    if (!response.ok) {
+      throw new Error(`Industry filter error: ${response.status}`);
     }
-  };
 
-  const handleGetMoreCredits = () => {
+    const data = await response.json();
+    console.log(`Found ${data.length} investors for industry: ${newIndustry}`);
+    setInvestors(data);
+    setCurrentPage(1);
+  } catch (error) {
+    console.error('Error applying industry filter:', error);
+    toast.error('Failed to filter by industry');
+    setSelectedIndustry('');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleViewProfile = (investor: any) => {
+  if (credits.total === 0) {
     setShowCreditModal(true);
-  };
+  } else {
+    router.push(`/investor/${encodeURIComponent(investor.id)}`);
+  }
+};
 
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      router.push('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
+const handleGetMoreCredits = () => {
+  setShowCreditModal(true);
+};
 
-  const fetchCredits = async (userId: string) => {
-    try {
-      console.log('Fetching credits for user:', userId);
-      const userRef = doc(db, 'users', userId);
-      const userDoc = await getDoc(userRef);
-      
-      if (userDoc.exists()) {
-        const userData = userDoc.data() as UserData;
-        setCredits({
-          total: userData.credits || 0
-        });
-      } else {
-        console.log('No user document found');
-        setCredits({
-          total: 0
-        });
-      }
-    } catch (error) {
-      console.error('Error in fetchCredits:', error);
+const handleLogout = async () => {
+  try {
+    await auth.signOut();
+    router.push('/');
+  } catch (error) {
+    console.error('Error signing out:', error);
+    toast.error('Failed to sign out');
+  }
+};
+
+const fetchCredits = async (userId: string) => {
+  try {
+    console.log('Fetching credits for user:', userId);
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data() as UserData;
+      setCredits({
+        total: userData.credits || 0
+      });
+    } else {
+      console.log('No user document found');
       setCredits({
         total: 0
       });
     }
-  };
-
-  const initializeRazorpay = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      
-      script.onload = () => {
-        resolve(true);
-      };
-      
-      script.onerror = () => {
-        resolve(false);
-      };
-
-      document.body.appendChild(script);
+  } catch (error) {
+    console.error('Error in fetchCredits:', error);
+    toast.error('Failed to load credits');
+    setCredits({
+      total: 0
     });
-  };
+  }
+};
 
-  const handlePayment = async (plan: PaymentPlan) => {
-    setLoadingPayment(true);
-    try {
-      const res = await initializeRazorpay();
+const initializeRazorpay = () => {
+  return new Promise<boolean>((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    
+    script.onload = () => {
+      resolve(true);
+    };
+    
+    script.onerror = () => {
+      resolve(false);
+    };
 
-      if (!res) {
-        alert('Razorpay SDK failed to load');
-        return;
-      }
+    document.body.appendChild(script);
+  });
+};
 
-      // Get current user token
-      const token = await user.getIdToken();
-      
-      console.log('Creating order with:', {
+const handlePayment = async (plan: PaymentPlan) => {
+  setLoadingPayment(true);
+  try {
+    const res = await initializeRazorpay();
+
+    if (!res) {
+      alert('Razorpay SDK failed to load');
+      return;
+    }
+    
+    // Check if user is authenticated
+    if (!user) {
+      toast.error('Please log in to purchase credits');
+      setLoadingPayment(false);
+      return;
+    }
+
+    // Check if Razorpay key is available
+    if (!RAZORPAY_KEY) {
+      throw new Error('Razorpay key is not configured');
+    }
+
+    // Get current user token
+    const token = await user.getIdToken();
+    
+    console.log('Creating order with:', {
+      amount: plan.price,
+      credits: plan.credits,
+      planId: plan.id
+    });
+
+    // Make API call to your backend to create order
+    const response = await fetch('http://localhost:5000/api/create-order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
         amount: plan.price,
         credits: plan.credits,
         planId: plan.id
-      });
-
-      // Make API call to your backend to create order
-      const response = await fetch('http://localhost:5000/api/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          amount: plan.price,
-          credits: plan.credits,
-          planId: plan.id
-        }),
-        credentials: 'include',
-        mode: 'cors'
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Order creation failed:', response.status, errorData);
-        throw new Error(`Failed to create order: ${errorData.error || response.statusText}`);
-      }
-
-      const order = await response.json();
-      
-      if (!order.id) {
-        throw new Error('Invalid order response: missing order ID');
-      }
-
-      console.log('Order created successfully:', order);
-
-      const options = {
-        key: RAZORPAY_KEY,
-        amount: plan.price * 100, // Convert to paise
-        currency: "INR",
-        name: "FindMyAngel",
-        description: `${plan.name} Plan - ${plan.credits} Credits`,
-        order_id: order.id,
-        handler: async function (response: any) {
-          try {
-            const verifyResponse = await fetch('http://localhost:5000/api/verify-payment', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-                planId: plan.id,
-                credits: plan.credits
-              }),
-              credentials: 'include',
-              mode: 'cors'
-            });
-
-            const result = await verifyResponse.json();
-
-            if (result.success) {
-              setCredits(prev => ({
-                total: prev.total + plan.credits
-              }));
-              setShowCreditModal(false);
-              alert('Payment successful! Credits added to your account.');
-            } else {
-              throw new Error('Payment verification failed');
-            }
-          } catch (error) {
-            console.error('Payment verification failed:', error);
-            alert('Payment verification failed. Please contact support.');
-          }
-        },
-        prefill: {
-          name: user?.displayName || '',
-          email: user?.email || '',
-        },
-        theme: {
-          color: "#4F46E5",
-        },
-        modal: {
-          ondismiss: function() {
-            setLoadingPayment(false);
-          }
-        }
-      };
-
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.on('payment.failed', function (response: any) {
-        console.error('Payment failed:', response.error);
-        alert('Payment failed. Please try again.');
-        setLoadingPayment(false);
-      });
-      paymentObject.open();
-      
-    } catch (error) {
-      console.error('Payment initialization failed:', error);
-      alert(`Unable to initialize payment: ${error.message}`);
-    } finally {
-      setLoadingPayment(false);
-    }
-  };
-
-  // Add new handler for community join
-  const handleJoinCommunity = () => {
-    // Open the form modal first
-    setShowCommunityModal(true);
-  };
-
-  const handleCommunitySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      // Get the current user's token
-      const token = await auth.currentUser?.getIdToken();
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
-
-      console.log('Submitting form data:', communityForm); // Debug log
-
-      // Submit to backend
-      const response = await fetch('http://localhost:5000/api/community/join', { // Make sure URL matches your Flask server
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: communityForm.name,
-          email: communityForm.email,
-          startupName: communityForm.startupName,
-          location: communityForm.location,
-          socialMediaLink: communityForm.socialMediaLink || ''
-        })
-      });
-
-      console.log('Response status:', response.status); // Debug log
-
-      const data = await response.json();
-      console.log('Response data:', data); // Debug log
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to join community');
-      }
-
-      // Success! Open WhatsApp group and reset form
-      window.open('https://chat.whatsapp.com/JBPViBYExVK9UHVreG05Cz', '_blank');
-      
-      setShowCommunityModal(false);
-      setCommunityForm({
-        name: '',
-        email: '',
-        startupName: '',
-        location: '',
-        socialMediaLink: ''
-      });
-
-      // Show success message
-      toast.success('Successfully joined the community!');
-
-    } catch (error) {
-      console.error('Error joining community:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to join community');
-    }
-  };
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        router.push('/');
-      } else {
-        console.log('User authenticated:', user.uid); // Debug log
-        setUser(user);
-        const token = await user.getIdToken();
-        fetchData(token);
-        fetchCredits(user.uid);
-      }
+      }),
+      credentials: 'include',
+      mode: 'cors'
     });
 
-    return () => unsubscribe();
-  }, [router]);
-
-  useEffect(() => {
-    if (investors.length > 0) {
-      setTotalPages(Math.ceil(investors.length / itemsPerPage));
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Order creation failed:', response.status, errorData);
+      throw new Error(`Failed to create order: ${errorData.error || response.statusText}`);
     }
-  }, [investors, itemsPerPage]);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentInvestors = investors.slice(indexOfFirstItem, indexOfLastItem);
+    const order = await response.json();
+    
+    if (!order.id) {
+      throw new Error('Invalid order response: missing order ID');
+    }
 
-  const paginate = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+    console.log('Order created successfully:', order);
 
-  useEffect(() => {
-    const loadInitialData = async () => {
-      if (user) {
+    const options: RazorpayOptions = {
+      key: RAZORPAY_KEY,
+      amount: plan.price * 100, // Convert to paise
+      currency: "INR",
+      name: "FindMyAngel",
+      description: `${plan.name} Plan - ${plan.credits} Credits`,
+      order_id: order.id,
+      handler: async function (response: any) {
         try {
-          setLoading(true);
-          const token = await user.getIdToken();
-          await fetchData(token);
+          const verifyResponse = await fetch('http://localhost:5000/api/verify-payment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              planId: plan.id,
+              credits: plan.credits
+            }),
+            credentials: 'include',
+            mode: 'cors'
+          });
+
+          const result = await verifyResponse.json();
+
+          if (result.success) {
+            setCredits(prev => ({
+              total: prev.total + plan.credits
+            }));
+            setShowCreditModal(false);
+            alert('Payment successful! Credits added to your account.');
+          } else {
+            throw new Error('Payment verification failed');
+          }
         } catch (error) {
-          console.error('Error loading initial data:', error);
-        } finally {
-          setLoading(false);
+          console.error('Payment verification failed:', error);
+          alert('Payment verification failed. Please contact support.');
+        }
+      },
+      prefill: {
+        name: user?.displayName || '',
+        email: user?.email || '',
+      },
+      theme: {
+        color: "#4F46E5",
+      },
+      modal: {
+        ondismiss: function() {
+          setLoadingPayment(false);
         }
       }
     };
 
-    loadInitialData();
-  }, [user]);
+    // Make sure window.Razorpay is available
+    if (typeof window.Razorpay !== 'function') {
+      throw new Error('Razorpay is not initialized properly');
+    }
 
-  const redactText = (text: string) => {
-    if (!text) return '';
-    if (credits.total > 0) return text;
-    
-    // For names: Keep first letter of each word, replace rest with X
-    const words = text.split(' ');
-    const redactedWords = words.map(word => {
-      if (word.length <= 1) return word;
-      return word[0] + 'X'.repeat(word.length - 1);
+    const paymentObject = new window.Razorpay(options);
+    paymentObject.on('payment.failed', function (response: any) {
+      console.error('Payment failed:', response.error);
+      alert('Payment failed. Please try again.');
+      setLoadingPayment(false);
     });
-    return redactedWords.join(' ');
+    paymentObject.open();
+    
+  } catch (error: any) {
+    console.error('Payment initialization failed:', error);
+    alert(`Unable to initialize payment: ${error.message}`);
+  } finally {
+    setLoadingPayment(false);
+  }
+};
+
+// Add new handler for community join
+const handleJoinCommunity = () => {
+  // Open the form modal first
+  setShowCommunityModal(true);
+};
+
+const handleCommunitySubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    // Get the current user's token
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('Not authenticated');
+    }
+    
+    const token = await currentUser.getIdToken();
+
+    console.log('Submitting form data:', communityForm); // Debug log
+
+    // Submit to backend
+    const response = await fetch('http://localhost:5000/api/community/join', { // Make sure URL matches your Flask server
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        name: communityForm.name,
+        email: communityForm.email,
+        startupName: communityForm.startupName,
+        location: communityForm.location,
+        socialMediaLink: communityForm.socialMediaLink || ''
+      })
+    });
+
+    console.log('Response status:', response.status); // Debug log
+
+    const data = await response.json();
+    console.log('Response data:', data); // Debug log
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to join community');
+    }
+
+    // Success! Open WhatsApp group and reset form
+    window.open('https://chat.whatsapp.com/JBPViBYExVK9UHVreG05Cz', '_blank');
+    
+    setShowCommunityModal(false);
+    setCommunityForm({
+      name: '',
+      email: '',
+      startupName: '',
+      location: '',
+      socialMediaLink: ''
+    });
+
+    // Show success message
+    toast.success('Successfully joined the community!');
+
+  } catch (error: any) {
+    console.error('Error joining community:', error);
+    toast.error(error instanceof Error ? error.message : 'Failed to join community');
+  }
+};
+
+useEffect(() => {
+  const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      router.push('/');
+    } else {
+      console.log('User authenticated:', user.uid); // Debug log
+      setUser(user);
+      
+      try {
+        const token = await user.getIdToken();
+        fetchData(token);
+        fetchCredits(user.uid);
+      } catch (error) {
+        console.error('Error initializing user data:', error);
+        toast.error('Failed to load user data');
+      }
+    }
+  });
+
+  return () => unsubscribe();
+}, [router]);
+
+useEffect(() => {
+  if (investors.length > 0) {
+    setTotalPages(Math.ceil(investors.length / itemsPerPage));
+  }
+}, [investors, itemsPerPage]);
+
+const indexOfLastItem = currentPage * itemsPerPage;
+const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+const currentInvestors = investors.slice(indexOfFirstItem, indexOfLastItem);
+
+const paginate = (pageNumber: number) => {
+  setCurrentPage(pageNumber);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+useEffect(() => {
+  const loadInitialData = async () => {
+    if (user) {
+      try {
+        setLoading(true);
+        const token = await user.getIdToken();
+        await fetchData(token);
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+        toast.error('Failed to load initial data');
+      } finally {
+        setLoading(false);
+      }
+    }
   };
+
+  loadInitialData();
+}, [user]);
+
+const redactText = (text: string) => {
+  if (!text) return '';
+  if (credits.total > 0) return text;
+  
+  // For names: Keep first letter of each word, replace rest with X
+  const words = text.split(' ');
+  const redactedWords = words.map(word => {
+    if (word.length <= 1) return word;
+    return word[0] + 'X'.repeat(word.length - 1);
+  });
+  return redactedWords.join(' ');
+};
 
   if (loading) {
     return (
@@ -1407,7 +1520,10 @@ export default function Dashboard() {
                     </li>
                   </ul>
                   <button 
-                    onClick={() => handlePayment({ id: 'starter', price: 499, credits: 50 })}
+                    onClick={() => handlePayment({
+                      id: 'starter', price: 499, credits: 50,
+                      name: ''
+                    })}
                     className={`w-full py-2.5 rounded-lg font-medium transition-colors ${
                       darkMode 
                         ? 'bg-gray-700 text-white hover:bg-gray-600' 
@@ -1453,7 +1569,10 @@ export default function Dashboard() {
                     </li>
                   </ul>
                   <button 
-                    onClick={() => handlePayment({ id: 'pro', price: 1699, credits: 200 })}
+                    onClick={() => handlePayment({
+                      id: 'pro', price: 1699, credits: 200,
+                      name: ''
+                    })}
                     className="w-full py-2.5 rounded-lg font-medium bg-gradient-to-r from-indigo-600 to-blue-500 text-white hover:from-indigo-700 hover:to-blue-600 transition-all duration-200"
                   >
                     Get Started
@@ -1513,7 +1632,10 @@ export default function Dashboard() {
                       </li> */}
                     </ul>
                     <button 
-                      onClick={() => handlePayment({ id: 'enterprise', price: 3999, credits: 500 })}
+                      onClick={() => handlePayment({
+                        id: 'enterprise', price: 3999, credits: 500,
+                        name: ''
+                      })}
                       className={`w-full py-3 rounded-lg font-medium bg-gradient-to-r hover:shadow-lg transition-all duration-200 ${
                         darkMode 
                           ? 'from-purple-900 to-indigo-900 hover:from-purple-800 hover:to-indigo-800 text-white border border-purple-700/50' 
@@ -1700,7 +1822,7 @@ export default function Dashboard() {
 
               {/* Footer Text */}
               <p className={`text-center text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                By joining, you'll be connected with fellow founders and investors
+                By joining, you&lsquo;ll be connected with fellow founders and investors
               </p>
             </form>
           </div>
