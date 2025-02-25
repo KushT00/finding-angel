@@ -1,0 +1,8 @@
+flask
+flask-cors
+firebase-admin
+google-generativeai
+python-dotenv
+openai
+razorpay
+gunicorn
