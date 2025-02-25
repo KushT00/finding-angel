@@ -854,7 +854,7 @@ export default function Home() {
                     rel="noopener noreferrer"
                     className="text-indigo-500 hover:text-indigo-600 transition-colors duration-200 hover:underline"
                   >
-                    Kush Tejani
+                    KK
                   </a>
                 </div>
               </div>
