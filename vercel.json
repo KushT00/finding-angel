@@ -3,7 +3,8 @@
     "builds": [
       {
         "src": "api/index.py",
-        "use": "@vercel/python"
+        "use": "@vercel/python",
+        "config": { "runtime": "python3.9" }
       },
       {
         "src": "next.config.js",
@@ -13,7 +14,7 @@
     "routes": [
       {
         "src": "/api/(.*)",
-        "dest": "api/index.py"
+        "dest": "/api/index.py"
       }
     ]
   }
