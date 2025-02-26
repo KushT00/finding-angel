@@ -53,8 +53,9 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
-def handler(request, *args, **kwargs):
-    return app(request.environ, *args)
+def handler(event, context):
+    return app
+
 
 @app.route('/test', methods=['GET'])
 def hello():
