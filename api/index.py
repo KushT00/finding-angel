@@ -58,7 +58,10 @@ def handler(request, *args, **kwargs):
 
 @app.route('/test', methods=['GET'])
 def hello():
-    return jsonify({"message": "Hello from FindMyAngel API!!!"})
+    try:
+        return jsonify({"message": "Hello from FindMyAngel API!!!"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 # Initialize Firebase Admin if not already initialized
 
