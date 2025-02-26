@@ -7,6 +7,7 @@ import { auth } from "../lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useRouter } from 'next/navigation';
+import Head from 'next/head';
 
 
 const provider = new GoogleAuthProvider();
@@ -111,6 +112,10 @@ export default function Home() {
   return (
     <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-gradient-to-b from-gray-50 to-white'}`}>
       {/* Navbar */}
+      <Head>
+        <title>FindMyAngel - Connect with Investors</title>
+        <meta name="description" content="Find and connect with top angel investors and VCs worldwide." />
+      </Head>
       <nav className={`fixed top-0 left-0 right-0 z-50 ${darkMode ? 'bg-gray-900/80' : 'bg-white/80'} backdrop-blur-sm border-b ${darkMode ? 'border-gray-800' : 'border-gray-100'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -854,7 +859,7 @@ export default function Home() {
                     rel="noopener noreferrer"
                     className="text-indigo-500 hover:text-indigo-600 transition-colors duration-200 hover:underline"
                   >
-                    KK
+                    Kush Tejani
                   </a>
                 </div>
               </div>
