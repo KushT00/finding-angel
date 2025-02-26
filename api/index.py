@@ -56,9 +56,9 @@ app.wsgi_app = ProxyFix(app.wsgi_app)
 def handler(request, *args, **kwargs):
     return app(request.environ, *args)
 
-@app.route('/test')
-def test():
-    return jsonify({"status": "success", "message": "This is a test endpoint!"})
+@app.route('/test', methods=['GET'])
+def hello():
+    return jsonify({"message": "Hello from FindMyAngel API!!!"})
 
 # Initialize Firebase Admin if not already initialized
 
