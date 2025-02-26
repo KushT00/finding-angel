@@ -964,3 +964,6 @@ def submit_contact():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+# This is what Vercel will use to run your app
+app.debug = False
