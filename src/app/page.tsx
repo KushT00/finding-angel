@@ -191,7 +191,7 @@ export default function Home() {
               ) : (
                 <div className="flex items-center space-x-4">
                   <img
-                    src={user?.picture || "/default-avatar.png"}
+                    src={user?.picture || "https://github.com/shadcn.png"}
                     alt={user?.name || "User"}
                     className="w-8 h-8 rounded-full"
                   />
