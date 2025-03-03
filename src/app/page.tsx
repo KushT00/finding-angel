@@ -13,6 +13,7 @@ import Head from 'next/head';
 const provider = new GoogleAuthProvider();
 
 export default function Home() {
+  
   // Define User Type
   type User = {
     name: string;
@@ -226,7 +227,9 @@ export default function Home() {
               <button className="px-8 py-4 rounded-xl font-medium text-white bg-gradient-to-r from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 transform hover:scale-105 transition-all duration-200 shadow-lg" onClick={handleSignIn}>
                 Get Started
               </button>
-              <button className={`px-8 py-4 rounded-xl font-medium ${darkMode ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-white text-gray-900 hover:bg-gray-100'} border border-gray-200 transform hover:scale-105 transition-all duration-200 shadow-lg`}>
+              <button
+               onClick={() => router.push("/about")}
+              className={`px-8 py-4 rounded-xl font-medium ${darkMode ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-white text-gray-900 hover:bg-gray-100'} border border-gray-200 transform hover:scale-105 transition-all duration-200 shadow-lg`}>
                 Learn More
               </button>
             </div>
