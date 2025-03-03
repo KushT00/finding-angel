@@ -132,29 +132,29 @@ export default function InvestorProfile() {
       try {
         const user = auth.currentUser;
         if (!user) return;
-  
+
         const token = await user.getIdToken();
         const headers = {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         };
-  
+
         if (!params.id) {
           throw new Error("Invalid investor ID");
         }
-  
+
         const cleanId = params.id
           ?.toString()
           .replace('http://', '')
           .replace('https://', '')
           .replace('www.', '');
-  
+
         // Use the regular endpoint since we want full data
         const response = await fetch(`https://findmyangelapi.vercel.app/api/investors/${cleanId}`, {
           headers,
           cache: 'no-store'
         });
-  
+
         if (!response.ok) {
           if (response.status === 403) {
             router.push('/credits');
@@ -162,18 +162,18 @@ export default function InvestorProfile() {
           }
           throw new Error(`Failed to fetch data`);
         }
-  
+
         const data = await response.json();
         setInvestor(data.investor);
         setDescription(data.description);
-  
+
       } catch (error) {
         console.error('Error:', error);
       } finally {
         setLoading(false);
       }
     };
-  
+
     if (params.id) {
       fetchData().then(() => {
         // Only fetch AI summary after basic data is loaded
@@ -181,7 +181,7 @@ export default function InvestorProfile() {
       });
     }
   }, [fetchAISummary, params.id, router]);
-  
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -260,26 +260,27 @@ export default function InvestorProfile() {
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} transition-colors duration-200`}>
       <div className={`w-full ${darkMode ? 'bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-r from-blue-50 via-white to-blue-50'} border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex justify-between items-center mb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-12">
+          {/* Header Buttons */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <button
               onClick={() => router.back()}
               className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${darkMode
                 ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                 : 'bg-white text-gray-600 hover:bg-gray-50'
-                } shadow-sm hover:shadow-md transition-all duration-200`}
+                } shadow-sm hover:shadow-md transition-all duration-200 text-sm md:text-base`}
             >
               <ChevronLeft size={16} />
               Back to Dashboard
             </button>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
               <button
                 onClick={handleShare}
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${darkMode
                   ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                   : 'bg-white text-gray-600 hover:bg-gray-50'
-                  } shadow-sm hover:shadow-md transition-all duration-200`}
+                  } shadow-sm hover:shadow-md transition-all duration-200 text-sm md:text-base w-full md:w-auto`}
               >
                 <Share2 size={16} />
                 Share
@@ -291,7 +292,7 @@ export default function InvestorProfile() {
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${darkMode
                   ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                   : 'bg-white text-gray-600 hover:bg-gray-50'
-                  } shadow-sm hover:shadow-md transition-all duration-200 ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                  } shadow-sm hover:shadow-md transition-all duration-200 text-sm md:text-base w-full md:w-auto ${loading ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
               >
                 <div className="flex items-center gap-2">
@@ -311,13 +312,14 @@ export default function InvestorProfile() {
             </div>
           </div>
 
+          {/* Title and Subtitle */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
             <div className="space-y-4">
               <div className="transform transition-all duration-200 hover:translate-x-2">
-                <h1 className={`text-5xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} tracking-tight`}>
+                <h1 className={`text-3xl md:text-5xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'} tracking-tight`}>
                   {formatValue(investor.name)}
                 </h1>
-                <p className={`text-xl mt-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`text-lg md:text-xl mt-3 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   {formatValue(investor.company_name)}
                 </p>
               </div>
@@ -341,7 +343,7 @@ export default function InvestorProfile() {
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full md:w-auto">
               {[
                 {
                   value: formatValue(investor.No_Of_Investments, 'number'),
@@ -364,14 +366,14 @@ export default function InvestorProfile() {
               ].map((stat, index) => (
                 <div
                   key={index}
-                  className={`p-6 rounded-2xl transform transition-all duration-200 
-                    hover:scale-105 hover:shadow-xl ${darkMode
+                  className={`p-4 md:p-6 rounded-2xl transform transition-all duration-200 
+            hover:scale-105 hover:shadow-xl ${darkMode
                       ? 'bg-gray-800 text-gray-300 hover:bg-gray-750'
                       : 'bg-white text-gray-600 hover:bg-gray-50'
                     } shadow-lg`}
                 >
                   <div className={`text-${stat.color}-500 mb-2`}>{stat.icon}</div>
-                  <p className={`text-3xl font-bold text-${stat.color}-500 mb-1`}>
+                  <p className={`text-2xl md:text-3xl font-bold text-${stat.color}-500 mb-1`}>
                     {stat.value}
                   </p>
                   <p className="text-sm opacity-80">{stat.label}</p>

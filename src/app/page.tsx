@@ -1,19 +1,20 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/rules-of-hooks */
-/* eslint-disable @next/next/no-img-element */
 "use client";
 import { useState, useEffect } from "react";
-import { GoogleAuthProvider, signInWithPopup, signOut  } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useRouter } from 'next/navigation';
 import Head from 'next/head';
+import Navbar from "@/components/nav";
 
 
 const provider = new GoogleAuthProvider();
 
 export default function Home() {
-  
+
   // Define User Type
   type User = {
     name: string;
@@ -111,104 +112,13 @@ export default function Home() {
   };
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'dark bg-gray-900' : 'bg-gradient-to-b from-gray-50 to-white'}`}>
+    <div className={`min-h-screen  ${darkMode ? 'dark bg-gray-900' : 'bg-gradient-to-b from-gray-50 to-white'}`}>
       {/* Navbar */}
       <Head>
         <title>FindMyAngel - Connect with Investors</title>
         <meta name="description" content="Find and connect with top angel investors and VCs worldwide." />
       </Head>
-      <nav className={`fixed top-0 left-0 right-0 z-50 ${darkMode ? 'bg-gray-900/80' : 'bg-white/80'} backdrop-blur-sm border-b ${darkMode ? 'border-gray-800' : 'border-gray-100'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <div className="flex items-center space-x-3 group">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-blue-500 rounded-xl blur-md opacity-75 group-hover:opacity-100 transition duration-300"></div>
-                <div className="relative bg-gradient-to-r from-indigo-600 to-blue-500 text-white p-2.5 rounded-xl shadow-lg">
-                  <svg
-                    className="w-6 h-6"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <div className="text-4xl tracking-wide" style={{ fontFamily: '"Monomakh", serif' }}>
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-500">
-                    Find
-                  </span>
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-500">
-                    My
-                  </span>
-                  <span className="bg-clip-text text-transparent bg-gradient-to-br from-indigo-500 via-blue-500 to-indigo-600">
-                    Angel
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="h-[1px] w-5 bg-gradient-to-r from-transparent via-indigo-200 to-transparent dark:via-indigo-800"></div>
-                  <span className="text-[10px] font-medium tracking-[0.2em] text-indigo-600 dark:text-indigo-400" style={{ fontFamily: "'Inter', sans-serif" }}>
-                    INVESTOR NETWORK
-                  </span>
-                  <div className="h-[1px] w-5 bg-gradient-to-r from-transparent via-indigo-200 to-transparent dark:via-indigo-800"></div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right side */}
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={toggleDarkMode}
-                className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'} transition-colors duration-200`}
-              >
-                {darkMode ? (
-                  <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                )}
-              </button>
-              {!user ? (
-                <button
-                  onClick={handleSignIn}
-                  className="flex items-center gap-2 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 
-                  transition-colors duration-200 rounded-lg font-medium shadow-sm hover:shadow-md"
-                >
-                  {isLoading ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    "Sign In"
-                  )}
-                </button>
-              ) : (
-                <div className="flex items-center space-x-4">
-                  <img
-                    src={user?.picture || "https://github.com/shadcn.png"}
-                    alt={user?.name || "User"}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <button
-                    onClick={handleSignOut}
-                    className="px-4 py-2 text-gray-700 hover:text-gray-900 bg-gray-100 
-                    hover:bg-gray-200 rounded-lg font-medium transition-colors duration-200"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </nav>
-
+     <Navbar user={user} handleSignIn={handleSignIn} handleSignOut={handleSignOut} darkMode={darkMode} toggleDarkMode={toggleDarkMode}/>
       {/* Hero Section */}
       <div className={`pt-32 pb-20 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
         <div className="container mx-auto px-6">
@@ -228,28 +138,35 @@ export default function Home() {
                 Get Started
               </button>
               <button
-               onClick={() => router.push("/about")}
-              className={`px-8 py-4 rounded-xl font-medium ${darkMode ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-white text-gray-900 hover:bg-gray-100'} border border-gray-200 transform hover:scale-105 transition-all duration-200 shadow-lg`}>
+                onClick={() => router.push("/about")}
+                className={`px-8 py-4 rounded-xl font-medium ${darkMode ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-white text-gray-900 hover:bg-gray-100'} border border-gray-200 transform hover:scale-105 transition-all duration-200 shadow-lg`}>
                 Learn More
               </button>
             </div>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 mt-16 max-w-3xl mx-auto">
-            <div className={`border rounded-xl p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} transform hover:scale-105 transition-transform duration-300`}>
-              <div className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">2200+</div>
-              <div className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-2 font-medium`}>Verified Investors</div>
-            </div>
-            <div className={`border rounded-xl p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} transform hover:scale-105 transition-transform duration-300`}>
-              <div className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">100+</div>
-              <div className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-2 font-medium`}>Investment Sectors</div>
-            </div>
-            <div className={`border rounded-xl p-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} transform hover:scale-105 transition-transform duration-300`}>
-              <div className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">100%</div>
-              <div className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} mt-2 font-medium`}>Verified Profiles</div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-16 w-full max-w-3xl px-4 mx-auto">
+            {[
+              { value: "2200+", label: "Verified Investors" },
+              { value: "100+", label: "Investment Sectors" },
+              { value: "100%", label: "Verified Profiles" }
+            ].map((stat, index) => (
+              <div
+                key={index}
+                className={`border rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-transform duration-300 transform hover:scale-105
+        ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'}`}
+              >
+                <div className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent">
+                  {stat.value}
+                </div>
+                <div className={`mt-2 font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {stat.label}
+                </div>
+              </div>
+            ))}
           </div>
+
         </div>
       </div>
 
