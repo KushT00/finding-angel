@@ -36,7 +36,7 @@ export default function Home() {
         const token = await firebaseUser.getIdToken();
         // Verify token with backend
         try {
-          const response = await fetch('http://localhost:5000/auth/verify', {
+          const response = await fetch('https://findmyangelapi.vercel.app/auth/verify', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -99,7 +99,7 @@ export default function Home() {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      await fetch('http://localhost:5000/auth/logout', {
+      await fetch('https://findmyangelapi.vercel.app/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
@@ -625,7 +625,7 @@ export default function Home() {
                 const formData = new FormData(e.target as HTMLFormElement);
 
                 try {
-                  const response = await fetch('http://localhost:5000/api/contact', {
+                  const response = await fetch('https://findmyangelapi.vercel.app/api/contact', {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json'

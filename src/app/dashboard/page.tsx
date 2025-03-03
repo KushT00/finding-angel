@@ -187,7 +187,7 @@ const fetchData = async (token: string) => {
       params.append('industry', selectedIndustry);
     }
 
-    const baseUrl = 'http://localhost:5000/api/investors';
+    const baseUrl = 'https://findmyangelapi.vercel.app/api/investors';
     const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
 
     console.log('Fetching from URL:', url);
@@ -199,7 +199,7 @@ const fetchData = async (token: string) => {
           'Content-Type': 'application/json'
         }
       }),
-      fetch('http://localhost:5000/api/investors/stats', {
+      fetch('https://findmyangelapi.vercel.app/api/investors/stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -245,7 +245,7 @@ const applyAdvancedFilters = async () => {
     const token = await user.getIdToken();
     console.log('Sending filters:', advancedFilters); // Debug log
 
-    const response = await fetch('http://localhost:5000/api/investors/advanced', {
+    const response = await fetch('https://findmyangelapi.vercel.app/api/investors/advanced', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -347,7 +347,7 @@ const handleLocationChange = async (e: React.ChangeEvent<HTMLSelectElement>) => 
       params.append('industry', selectedIndustry);
     }
 
-    const baseUrl = 'http://localhost:5000/api/investors';
+    const baseUrl = 'https://findmyangelapi.vercel.app/api/investors';
     const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
 
     const response = await fetch(url, {
@@ -404,7 +404,7 @@ const handleIndustryChange = async (e: React.ChangeEvent<HTMLSelectElement>) => 
       params.append('industry', newIndustry);
     }
 
-    const baseUrl = 'http://localhost:5000/api/investors';
+    const baseUrl = 'https://findmyangelapi.vercel.app/api/investors';
     const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
 
     console.log('Fetching with industry filter:', newIndustry);
@@ -530,7 +530,7 @@ const handlePayment = async (plan: PaymentPlan) => {
     });
 
     // Make API call to your backend to create order
-    const response = await fetch('http://localhost:5000/api/create-order', {
+    const response = await fetch('https://findmyangelapi.vercel.app/api/create-order', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -568,7 +568,7 @@ const handlePayment = async (plan: PaymentPlan) => {
       order_id: order.id,
       handler: async function (response: any) {
         try {
-          const verifyResponse = await fetch('http://localhost:5000/api/verify-payment', {
+          const verifyResponse = await fetch('https://findmyangelapi.vercel.app/api/verify-payment', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -656,7 +656,7 @@ const handleCommunitySubmit = async (e: React.FormEvent) => {
     console.log('Submitting form data:', communityForm); // Debug log
 
     // Submit to backend
-    const response = await fetch('http://localhost:5000/api/community/join', { // Make sure URL matches your Flask server
+    const response = await fetch('https://findmyangelapi.vercel.app/api/community/join', { // Make sure URL matches your Flask server
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

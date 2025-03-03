@@ -96,7 +96,7 @@ export default function InvestorProfile() {
 
       console.log("Fetching AI summary for ID:", cleanId); // Debug log
 
-      const response = await fetch(`http://localhost:5000/api/investors/${cleanId}/ai-summary`, {
+      const response = await fetch(`https://findmyangelapi.vercel.app/api/investors/${cleanId}/ai-summary`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -150,7 +150,7 @@ export default function InvestorProfile() {
           .replace('www.', '');
   
         // Use the regular endpoint since we want full data
-        const response = await fetch(`http://localhost:5000/api/investors/${cleanId}`, {
+        const response = await fetch(`https://findmyangelapi.vercel.app/api/investors/${cleanId}`, {
           headers,
           cache: 'no-store'
         });
@@ -211,7 +211,7 @@ export default function InvestorProfile() {
       }
 
       const token = await user.getIdToken();
-      const response = await fetch(`http://localhost:5000/api/investors/${params.id}/download`, {
+      const response = await fetch(`https://findmyangelapi.vercel.app/api/investors/${params.id}/download`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
