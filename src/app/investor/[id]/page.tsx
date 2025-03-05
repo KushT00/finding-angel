@@ -129,29 +129,49 @@ export default function InvestorProfile() {
 }, [params.id]);
 
 useEffect(() => {
-  const fetchData = async () => {
+  const checkAuthAndFetchData = async () => {
+    // Set initial loading state
+    setLoading(true);
+
     try {
+      // Wait for Firebase auth to resolve
+      await new Promise<void>((resolve) => {
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+          unsubscribe();
+          resolve();
+        });
+      });
+
       const user = auth.currentUser;
-      if (!user) return;
+      if (!user) {
+        // Redirect to login if no user
+        router.push('/login');
+        return;
+      }
 
-      const token = await user.getIdToken();
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
-
+      // Check if ID is available
       if (!params.id) {
-        throw new Error("Invalid investor ID");
+        router.push('/dashboard');
+        return;
       }
 
       const cleanId = params.id
         ?.toString()
-        .replace('http://', '')
-        .replace('https://', '')
-        .replace('www.', '');
+        .replace(/^(https?:\/\/)?(www\.)?/, '')
+        .trim();
 
+      if (!cleanId) {
+        router.push('/dashboard');
+        return;
+      }
+
+      // Fetch data with more robust error handling
+      const token = await user.getIdToken();
       const response = await fetch(`https://findmyangelapi.vercel.app/api/investors/${cleanId}`, {
-        headers,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
         cache: 'no-store'
       });
 
@@ -168,19 +188,19 @@ useEffect(() => {
       setDescription(data.description);
 
       // Fetch AI summary only once after main data is loaded
-      fetchAISummary();
+      await fetchAISummary();
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Authentication or data fetch error:', error);
+      router.push('/dashboard');
     } finally {
       setLoading(false);
     }
   };
 
-  if (params.id) {
-    fetchData();
-  }
+  checkAuthAndFetchData();
 }, [params.id, router, fetchAISummary]);
+
   const handleShare = async () => {
     if (navigator.share) {
       try {
