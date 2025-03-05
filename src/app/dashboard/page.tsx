@@ -1386,17 +1386,17 @@ export default function Dashboard() {
                     Pro
                   </div>
                   <div className="flex items-baseline gap-2 mb-2">
-                    <div className="text-3xl font-bold text-indigo-600">₹1,699</div>
+                    <div className="text-3xl font-bold text-indigo-600">₹700</div>
                     <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>one-time</span>
                   </div>
                   <div className={`mb-6 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    <span className="text-xl font-semibold text-indigo-600">200</span>
+                    <span className="text-xl font-semibold text-indigo-600">150</span>
                     <span> tokens</span>
                   </div>
                   <ul className={`space-y-3 mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                     <li className="flex items-center">
                       <Check className="w-5 h-5 text-indigo-500 mr-2" />
-                      View 200 investor profiles
+                      View 150 investor profiles
                     </li>
                     <li className="flex items-center">
                       <Check className="w-5 h-5 text-indigo-500 mr-2" />
@@ -1409,7 +1409,7 @@ export default function Dashboard() {
                   </ul>
                   <button
                     onClick={() => handlePayment({
-                      id: 'pro', price: 1699, credits: 200,
+                      id: 'pro', price: 700, credits: 150,
                       name: ''
                     })}
                     className="w-full py-2.5 rounded-lg font-medium bg-gradient-to-r from-indigo-600 to-blue-500 text-white hover:from-indigo-700 hover:to-blue-600 transition-all duration-200"
@@ -1430,11 +1430,11 @@ export default function Dashboard() {
                       <div className="h-5 w-px bg-gradient-to-b from-purple-500 to-transparent"></div>
                     </div>
                     <div className="flex items-baseline gap-2 mt-4">
-                      <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-blue-500 to-indigo-500 bg-clip-text text-transparent">₹3,999</div>
+                      <div className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-blue-500 to-indigo-500 bg-clip-text text-transparent">₹999</div>
                       <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>one-time</span>
                     </div>
                     <div className={`mt-2 mb-6`}>
-                      <span className="text-2xl font-semibold bg-gradient-to-r from-purple-600 via-blue-500 to-indigo-500 bg-clip-text text-transparent">500</span>
+                      <span className="text-2xl font-semibold bg-gradient-to-r from-purple-600 via-blue-500 to-indigo-500 bg-clip-text text-transparent">350</span>
                       <span className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}> tokens</span>
                     </div>
                     <ul className={`space-y-3 mb-6 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -1442,7 +1442,7 @@ export default function Dashboard() {
                         <div className="p-1 rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 mr-2">
                           <Check className="w-4 h-4 text-purple-500" />
                         </div>
-                        View 500 investor profiles
+                        View 350 investor profiles
                       </li>
                       <li className="flex items-center">
                         <div className="p-1 rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 mr-2">
