@@ -145,7 +145,7 @@ useEffect(() => {
       const user = auth.currentUser;
       if (!user) {
         // Redirect to login if no user
-        router.push('/login');
+        router.push('/');
         return;
       }
 
