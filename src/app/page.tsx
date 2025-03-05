@@ -366,11 +366,11 @@ export default function Home() {
               </div>
               <div className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`} style={{ fontFamily: '"Monomakh", serif' }}>Pro</div>
               <div className="flex items-baseline gap-2 mb-2">
-                <div className="text-4xl font-bold text-indigo-600" style={{ fontFamily: '"Monomakh", serif' }}>₹1,699</div>
+                <div className="text-4xl font-bold text-indigo-600" style={{ fontFamily: '"Monomakh", serif' }}>₹700</div>
                 <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>one-time</span>
               </div>
               <div className={`mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                <span className="text-2xl font-semibold text-indigo-600">200</span>
+                <span className="text-2xl font-semibold text-indigo-600">150</span>
                 <span> tokens</span>
               </div>
               <ul className={`space-y-4 mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -408,11 +408,11 @@ export default function Home() {
             <div className={`relative p-8 rounded-2xl shadow-lg border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} transform hover:scale-105 transition-all duration-300`}>
               <div className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`} style={{ fontFamily: '"Monomakh", serif' }}>Enterprise</div>
               <div className="flex items-baseline gap-2 mb-2">
-                <div className="text-4xl font-bold text-indigo-600" style={{ fontFamily: '"Monomakh", serif' }}>₹3,999</div>
+                <div className="text-4xl font-bold text-indigo-600" style={{ fontFamily: '"Monomakh", serif' }}>₹1,000</div>
                 <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>one-time</span>
               </div>
               <div className={`mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                <span className="text-2xl font-semibold text-indigo-600">500</span>
+                <span className="text-2xl font-semibold text-indigo-600">350</span>
                 <span> tokens</span>
               </div>
               <ul className={`space-y-4 mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
