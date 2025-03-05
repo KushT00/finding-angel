@@ -93,7 +93,7 @@ export default function InvestorProfile() {
       .replace('https://', '')
       .replace('www.', '');
 
-    console.log("Fetching AI summary for ID:", cleanId); // Debug log
+    // console.log("Fetching AI summary for ID:", cleanId); // Debug log
 
     const response = await fetch(`https://findmyangelapi.vercel.app/api/investors/${cleanId}/ai-summary`, {
       headers: {
@@ -102,10 +102,10 @@ export default function InvestorProfile() {
       }
     });
 
-    console.log("AI Summary Response status:", response.status); // Debug log
+    // console.log("AI Summary Response status:", response.status); // Debug log
 
     const data = await response.json();
-    console.log("AI Summary Data:", data); // Debug log
+    // console.log("AI Summary Data:", data); // Debug log
 
     if (!response.ok) {
       if (response.status === 429) {

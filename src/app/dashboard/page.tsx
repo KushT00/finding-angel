@@ -218,8 +218,8 @@ export default function Dashboard() {
       const investorsData = await investorsResponse.json();
       const statsData = await statsResponse.json();
 
-      console.log('Received investors:', investorsData.length);
-      console.log('Received stats:', statsData);
+      // console.log('Received investors:', investorsData.length);
+      // console.log('Received stats:', statsData);
 
       setInvestors(investorsData);
       setStats(statsData);
@@ -244,7 +244,7 @@ export default function Dashboard() {
       }
 
       const token = await user.getIdToken();
-      console.log('Sending filters:', advancedFilters); // Debug log
+      // console.log('Sending filters:', advancedFilters); // Debug log
 
       const response = await fetch('https://findmyangelapi.vercel.app/api/investors/advanced', {
         method: 'POST',
@@ -408,7 +408,7 @@ export default function Dashboard() {
       const baseUrl = 'https://findmyangelapi.vercel.app/api/investors';
       const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
 
-      console.log('Fetching with industry filter:', newIndustry);
+      // console.log('Fetching with industry filter:', newIndustry);
 
       const response = await fetch(url, {
         headers: {
@@ -422,7 +422,7 @@ export default function Dashboard() {
       }
 
       const data = await response.json();
-      console.log(`Found ${data.length} investors for industry: ${newIndustry}`);
+      // console.log(`Found ${data.length} investors for industry: ${newIndustry}`);
       setInvestors(data);
       setCurrentPage(1);
     } catch (error) {
@@ -458,7 +458,7 @@ export default function Dashboard() {
 
   const fetchCredits = async (userId: string) => {
     try {
-      console.log('Fetching credits for user:', userId);
+      // console.log('Fetching credits for user:', userId);
       const userRef = doc(db, 'users', userId);
       const userDoc = await getDoc(userRef);
 
@@ -674,10 +674,10 @@ export default function Dashboard() {
         })
       });
 
-      console.log('Response status:', response.status); // Debug log
+      // console.log('Response status:', response.status); // Debug log
 
       const data = await response.json();
-      console.log('Response data:', data); // Debug log
+      // console.log('Response data:', data); // Debug log
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to join community');
@@ -709,7 +709,7 @@ export default function Dashboard() {
       if (!user) {
         router.push('/');
       } else {
-        console.log('User authenticated:', user.uid); // Debug log
+        // console.log('User authenticated:', user.uid); // Debug log
         setUser(user);
 
         try {
