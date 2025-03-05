@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useDarkMode } from '../../../context/DarkModeContext';
 import { auth } from '../../../lib/firebase';
@@ -70,118 +70,117 @@ export default function InvestorProfile() {
 
     return () => clearTimeout(timer);
   }, []);
+ // Memoized fetchAISummary to prevent unnecessary recreations
+ const fetchAISummary = useCallback(async () => {
+  setIsLoadingSummary(true);
+  setSummaryError(null);
 
-  // Move fetchAISummary outside useEffect so it can be called by retry button
-  const fetchAISummary = async () => {
-    setIsLoadingSummary(true);
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      setSummaryError("Authentication required");
+      return;
+    }
+
+    if (!params.id) {
+      throw new Error("Invalid investor ID");
+    }
+
+    const token = await user.getIdToken();
+    const cleanId = params.id
+      ?.toString()
+      .replace('http://', '')
+      .replace('https://', '')
+      .replace('www.', '');
+
+    console.log("Fetching AI summary for ID:", cleanId); // Debug log
+
+    const response = await fetch(`https://findmyangelapi.vercel.app/api/investors/${cleanId}/ai-summary`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log("AI Summary Response status:", response.status); // Debug log
+
+    const data = await response.json();
+    console.log("AI Summary Data:", data); // Debug log
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error('API rate limit exceeded. Please try again later.');
+      }
+      throw new Error(data.error || 'Failed to fetch AI summary');
+    }
+
+    if (!data.ai_summary) {
+      throw new Error('No summary received from server');
+    }
+
+    setAiSummary(data.ai_summary);
     setSummaryError(null);
+  } catch (error: any) {
+    console.error('Error fetching AI summary:', error);
+    setSummaryError(error.message || 'Unable to generate AI summary. Please try again later.');
+  } finally {
+    setIsLoadingSummary(false);
+  }
+}, [params.id]);
 
+useEffect(() => {
+  const fetchData = async () => {
     try {
       const user = auth.currentUser;
-      if (!user) {
-        setSummaryError("Authentication required");
-        return;
-      }
+      if (!user) return;
+
+      const token = await user.getIdToken();
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
 
       if (!params.id) {
         throw new Error("Invalid investor ID");
       }
 
-      const token = await user.getIdToken();
       const cleanId = params.id
         ?.toString()
         .replace('http://', '')
         .replace('https://', '')
         .replace('www.', '');
 
-      console.log("Fetching AI summary for ID:", cleanId); // Debug log
-
-      const response = await fetch(`https://findmyangelapi.vercel.app/api/investors/${cleanId}/ai-summary`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+      const response = await fetch(`https://findmyangelapi.vercel.app/api/investors/${cleanId}`, {
+        headers,
+        cache: 'no-store'
       });
 
-      console.log("AI Summary Response status:", response.status); // Debug log
+      if (!response.ok) {
+        if (response.status === 403) {
+          router.push('/credits');
+          return;
+        }
+        throw new Error(`Failed to fetch data`);
+      }
 
       const data = await response.json();
-      console.log("AI Summary Data:", data); // Debug log
+      setInvestor(data.investor);
+      setDescription(data.description);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch AI summary');
-      }
+      // Fetch AI summary only once after main data is loaded
+      fetchAISummary();
 
-      if (!data.ai_summary) {
-        throw new Error('No summary received from server');
-      }
-
-      setAiSummary(data.ai_summary);
-      setSummaryError(null);
-    } catch (error: any) {
-      console.error('Error fetching AI summary:', error);
-      setSummaryError(error.message || 'Unable to generate AI summary. Please try again later.');
+    } catch (error) {
+      console.error('Error:', error);
     } finally {
-      setIsLoadingSummary(false);
+      setLoading(false);
     }
   };
 
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const user = auth.currentUser;
-        if (!user) return;
-
-        const token = await user.getIdToken();
-        const headers = {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        };
-
-        if (!params.id) {
-          throw new Error("Invalid investor ID");
-        }
-
-        const cleanId = params.id
-          ?.toString()
-          .replace('http://', '')
-          .replace('https://', '')
-          .replace('www.', '');
-
-        // Use the regular endpoint since we want full data
-        const response = await fetch(`https://findmyangelapi.vercel.app/api/investors/${cleanId}`, {
-          headers,
-          cache: 'no-store'
-        });
-
-        if (!response.ok) {
-          if (response.status === 403) {
-            router.push('/credits');
-            return;
-          }
-          throw new Error(`Failed to fetch data`);
-        }
-
-        const data = await response.json();
-        setInvestor(data.investor);
-        setDescription(data.description);
-
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (params.id) {
-      fetchData().then(() => {
-        // Only fetch AI summary after basic data is loaded
-        fetchAISummary();
-      });
-    }
-  }, [fetchAISummary, params.id, router]);
-
+  if (params.id) {
+    fetchData();
+  }
+}, [params.id, router, fetchAISummary]);
   const handleShare = async () => {
     if (navigator.share) {
       try {
