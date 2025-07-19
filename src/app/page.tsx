@@ -83,7 +83,7 @@ export default function Home() {
           username: result.user.displayName,
           email: result.user.email,
           uuid: result.user.uid,
-          credits: 0,
+          credits: 2,
           createdAt: serverTimestamp()
         });
       }
@@ -341,12 +341,6 @@ export default function Home() {
                   <svg className="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
-                  WhatsApp community access
-                </li>
-                <li className="flex items-center">
-                  <svg className="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
                   Sharable Link
                 </li>
               </ul>
@@ -366,7 +360,7 @@ export default function Home() {
               </div>
               <div className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`} style={{ fontFamily: '"Monomakh", serif' }}>Pro</div>
               <div className="flex items-baseline gap-2 mb-2">
-                <div className="text-4xl font-bold text-indigo-600" style={{ fontFamily: '"Monomakh", serif' }}>₹699</div>
+                <div className="text-4xl font-bold text-indigo-600" style={{ fontFamily: '"Monomakh", serif' }}>₹700</div>
                 <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>one-time</span>
               </div>
               <div className={`mb-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -385,12 +379,6 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                   Investment focus areas
-                </li>
-                <li className="flex items-center">
-                  <svg className="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                  WhatsApp community access
                 </li>
                 <li className="flex items-center">
                   <svg className="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -432,13 +420,7 @@ export default function Home() {
                   <svg className="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
-                  WhatsApp community access
-                </li>
-                <li className="flex items-center">
-                  <svg className="w-5 h-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                  Priority support
+                  Priority support 24/7
                 </li>
               </ul>
               <button className={`w-full py-3 rounded-lg font-medium transition-colors duration-200 ${darkMode ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`} onClick={handleSignIn}>

@@ -17,7 +17,7 @@ export const initializeUserData = async (uid: string, email: string, name: strin
       await setDoc(userRef, {
         email,
         name,
-        credits: 5,
+        credits: 2,
         viewed_profiles: [],
         created_at: serverTimestamp()
       });

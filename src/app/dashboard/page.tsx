@@ -154,14 +154,6 @@ export default function Dashboard() {
   const [viewedInvestors, setViewedInvestors] = useState<Set<string>>(new Set());
   const [showCreditModal, setShowCreditModal] = useState(false);
   const [loadingPayment, setLoadingPayment] = useState(false);
-  const [showCommunityModal, setShowCommunityModal] = useState(false);
-  const [communityForm, setCommunityForm] = useState<CommunityFormData>({
-    name: '',
-    email: '',
-    startupName: '',
-    location: '',
-    socialMediaLink: ''
-  });
   const router = useRouter();
 
   // Helper function to get authenticated user token
@@ -499,209 +491,17 @@ export default function Dashboard() {
     });
   };
 
-  const handlePayment = async (plan: PaymentPlan) => {
-    setLoadingPayment(true);
-    try {
-      const res = await initializeRazorpay();
-
-      if (!res) {
-        alert('Razorpay SDK failed to load');
-        return;
-      }
-
-      // Check if user is authenticated
-      if (!user) {
-        toast.error('Please log in to purchase credits');
-        setLoadingPayment(false);
-        return;
-      }
-
-      // Check if Razorpay key is available
-      if (!RAZORPAY_KEY) {
-        throw new Error('Razorpay key is not configured');
-      }
-
-      // Get current user token
-      const token = await user.getIdToken();
-
-      console.log('Creating order with:', {
-        amount: plan.price,
-        credits: plan.credits,
-        planId: plan.id
-      });
-
-      // Make API call to your backend to create order
-      const response = await fetch('https://findmyangelapi.vercel.app/api/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          amount: plan.price,
-          credits: plan.credits,
-          planId: plan.id
-        }),
-        credentials: 'include',
-        mode: 'cors'
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Order creation failed:', response.status, errorData);
-        throw new Error(`Failed to create order: ${errorData.error || response.statusText}`);
-      }
-
-      const order = await response.json();
-
-      if (!order.id) {
-        throw new Error('Invalid order response: missing order ID');
-      }
-
-      console.log('Order created successfully:', order);
-
-      const options: RazorpayOptions = {
-        key: RAZORPAY_KEY,
-        amount: plan.price * 100, // Convert to paise
-        currency: "INR",
-        name: "FindMyAngel",
-        description: `${plan.name} Plan - ${plan.credits} Credits`,
-        order_id: order.id,
-        handler: async function (response: any) {
-          try {
-            const verifyResponse = await fetch('https://findmyangelapi.vercel.app/api/verify-payment', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_signature: response.razorpay_signature,
-                planId: plan.id,
-                credits: plan.credits
-              }),
-              credentials: 'include',
-              mode: 'cors'
-            });
-
-            const result = await verifyResponse.json();
-
-            if (result.success) {
-              setCredits(prev => ({
-                total: prev.total + plan.credits
-              }));
-              setShowCreditModal(false);
-              alert('Payment successful! Credits added to your account.');
-            } else {
-              throw new Error('Payment verification failed');
-            }
-          } catch (error) {
-            console.error('Payment verification failed:', error);
-            alert('Payment verification failed. Please contact support.');
-          }
-        },
-        prefill: {
-          name: user?.displayName || '',
-          email: user?.email || '',
-        },
-        theme: {
-          color: "#4F46E5",
-        },
-        modal: {
-          ondismiss: function () {
-            setLoadingPayment(false);
-          }
-        }
-      };
-
-      // Make sure window.Razorpay is available
-      if (typeof window.Razorpay !== 'function') {
-        throw new Error('Razorpay is not initialized properly');
-      }
-
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.on('payment.failed', function (response: any) {
-        console.error('Payment failed:', response.error);
-        alert('Payment failed. Please try again.');
-        setLoadingPayment(false);
-      });
-      paymentObject.open();
-
-    } catch (error: any) {
-      console.error('Payment initialization failed:', error);
-      alert(`Unable to initialize payment: ${error.message}`);
-    } finally {
-      setLoadingPayment(false);
-    }
-  };
-
-  // Add new handler for community join
-  const handleJoinCommunity = () => {
-    // Open the form modal first
-    setShowCommunityModal(true);
-  };
-
-  const handleCommunitySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      // Get the current user's token
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        throw new Error('Not authenticated');
-      }
-
-      const token = await currentUser.getIdToken();
-
-      console.log('Submitting form data:', communityForm); // Debug log
-
-      // Submit to backend
-      const response = await fetch('https://findmyangelapi.vercel.app/api/community/join', { // Make sure URL matches your Flask server
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          name: communityForm.name,
-          email: communityForm.email,
-          startupName: communityForm.startupName,
-          location: communityForm.location,
-          socialMediaLink: communityForm.socialMediaLink || ''
-        })
-      });
-
-      // console.log('Response status:', response.status); // Debug log
-
-      const data = await response.json();
-      // console.log('Response data:', data); // Debug log
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to join community');
-      }
-
-      // Success! Open WhatsApp group and reset form
-      window.open('https://chat.whatsapp.com/JBPViBYExVK9UHVreG05Cz', '_blank');
-
-      setShowCommunityModal(false);
-      setCommunityForm({
-        name: '',
-        email: '',
-        startupName: '',
-        location: '',
-        socialMediaLink: ''
-      });
-
-      // Show success message
-      toast.success('Successfully joined the community!');
-
-    } catch (error: any) {
-      console.error('Error joining community:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to join community');
-    }
+  // Replace Razorpay payment with mailto redirect
+  const handlePayment = (plan: PaymentPlan) => {
+    const subject = encodeURIComponent(`Interested in ${plan.id.charAt(0).toUpperCase() + plan.id.slice(1)} Plan on FindMyAngel`);
+    const body = [
+      "Hello FindMyAngel Team,",
+      "",
+      `I am interested in purchasing the ${plan.id.charAt(0).toUpperCase() + plan.id.slice(1)} Plan (₹${plan.price}, ${plan.credits} credits). Please guide me on the next steps.`,
+      "",
+      "Thank you!"
+    ].join('\n');
+    window.location.href = `mailto:officialfindmyangel@gmail.com?subject=${subject}&body=${encodeURIComponent(body)}`;
   };
 
   useEffect(() => {
@@ -791,7 +591,6 @@ export default function Dashboard() {
           credits={credits}
           darkMode={darkMode}
           toggleDarkMode={toggleDarkMode}
-          handleJoinCommunity={handleJoinCommunity}
           handleGetMoreCredits={handleGetMoreCredits}
           handleLogout={handleLogout}
         />
@@ -1355,10 +1154,6 @@ export default function Dashboard() {
                       <Check className="w-5 h-5 text-indigo-500 mr-2" />
                       Investment focus areas
                     </li>
-                    <li className="flex items-center">
-                      <Check className="w-5 h-5 text-indigo-500 mr-2" />
-                      WhatsApp community access
-                    </li>
                   </ul>
                   <button
                     onClick={() => handlePayment({
@@ -1401,10 +1196,6 @@ export default function Dashboard() {
                     <li className="flex items-center">
                       <Check className="w-5 h-5 text-indigo-500 mr-2" />
                       Investment focus areas
-                    </li>
-                    <li className="flex items-center">
-                      <Check className="w-5 h-5 text-indigo-500 mr-2" />
-                      WhatsApp community access
                     </li>
                   </ul>
                   <button
@@ -1454,12 +1245,6 @@ export default function Dashboard() {
                         <div className="p-1 rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 mr-2">
                           <Check className="w-4 h-4 text-purple-500" />
                         </div>
-                        WhatsApp community access
-                      </li>
-                      <li className="flex items-center">
-                        <div className="p-1 rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 mr-2">
-                          <Check className="w-4 h-4 text-purple-500" />
-                        </div>
                         Priority support 24/7
                       </li>
                       {/* <li className="flex items-center">
@@ -1471,7 +1256,7 @@ export default function Dashboard() {
                     </ul>
                     <button
                       onClick={() => handlePayment({
-                        id: 'enterprise', price: 3999, credits: 500,
+                        id: 'enterprise', price: 999, credits: 350,
                         name: ''
                       })}
                       className={`w-full py-3 rounded-lg font-medium bg-gradient-to-r hover:shadow-lg transition-all duration-200 ${darkMode
@@ -1495,161 +1280,6 @@ export default function Dashboard() {
                 </p>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Community Modal */}
-      {showCommunityModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'
-            } rounded-2xl shadow-xl w-[480px] transform transition-all duration-300 scale-100`}>
-            {/* Modal Header with Blue-Purple Gradient */}
-            <div className="relative overflow-hidden rounded-t-2xl">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600"></div>
-              <div className="relative p-5">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-xl font-semibold text-white">
-                      Join Our Investor Community
-                    </h2>
-                    <p className="mt-1 text-sm text-white/90">
-                      Connect with fellow founders and find your perfect investor match
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowCommunityModal(false)}
-                    className="p-1.5 rounded-lg transition-colors hover:bg-white/10"
-                  >
-                    <X size={18} className="text-white" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Form Section */}
-            <form onSubmit={handleCommunitySubmit} className="p-5 space-y-4">
-              <div className="space-y-4">
-                {/* Name Input */}
-                <div className="group">
-                  <label className={`block mb-1.5 text-sm font-medium transition-colors ${darkMode ? 'text-gray-300 group-focus-within:text-indigo-400' : 'text-gray-700 group-focus-within:text-indigo-600'
-                    }`}>
-                    Your Name *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      required
-                      value={communityForm.name}
-                      onChange={(e) => setCommunityForm({ ...communityForm, name: e.target.value })}
-                      className={`w-full px-3.5 py-2 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-2 ${darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring-indigo-500/20'
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-500 focus:ring-indigo-500/20'
-                        }`}
-                      placeholder="John Doe"
-                    />
-                  </div>
-                </div>
-
-                {/* Email Input */}
-                <div className="group">
-                  <label className={`block mb-1.5 text-sm font-medium transition-colors ${darkMode ? 'text-gray-300 group-focus-within:text-indigo-400' : 'text-gray-700 group-focus-within:text-indigo-600'
-                    }`}>
-                    Email *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="email"
-                      required
-                      value={communityForm.email}
-                      onChange={(e) => setCommunityForm({ ...communityForm, email: e.target.value })}
-                      className={`w-full px-3.5 py-2 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-2 ${darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring-indigo-500/20'
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-500 focus:ring-indigo-500/20'
-                        }`}
-                      placeholder="john@example.com"
-                    />
-                  </div>
-                </div>
-
-                {/* Startup Name Input */}
-                <div className="group">
-                  <label className={`block mb-1.5 text-sm font-medium transition-colors ${darkMode ? 'text-gray-300 group-focus-within:text-indigo-400' : 'text-gray-700 group-focus-within:text-indigo-600'
-                    }`}>
-                    Startup Name *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      required
-                      value={communityForm.startupName}
-                      onChange={(e) => setCommunityForm({ ...communityForm, startupName: e.target.value })}
-                      className={`w-full px-3.5 py-2 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-2 ${darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring-indigo-500/20'
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-500 focus:ring-indigo-500/20'
-                        }`}
-                      placeholder="Amazing Startup Inc."
-                    />
-                  </div>
-                </div>
-
-                {/* Location Input */}
-                <div className="group">
-                  <label className={`block mb-1.5 text-sm font-medium transition-colors ${darkMode ? 'text-gray-300 group-focus-within:text-indigo-400' : 'text-gray-700 group-focus-within:text-indigo-600'
-                    }`}>
-                    Startup Location *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      required
-                      value={communityForm.location}
-                      onChange={(e) => setCommunityForm({ ...communityForm, location: e.target.value })}
-                      className={`w-full px-3.5 py-2 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-2 ${darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring-indigo-500/20'
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-500 focus:ring-indigo-500/20'
-                        }`}
-                      placeholder="Mumbai, India"
-                    />
-                  </div>
-                </div>
-
-                {/* Social Media Link Input */}
-                <div className="group">
-                  <label className={`block mb-1.5 text-sm font-medium transition-colors ${darkMode ? 'text-gray-300 group-focus-within:text-indigo-400' : 'text-gray-700 group-focus-within:text-indigo-600'
-                    }`}>
-                    Social Media Link (Optional)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="url"
-                      value={communityForm.socialMediaLink}
-                      onChange={(e) => setCommunityForm({ ...communityForm, socialMediaLink: e.target.value })}
-                      className={`w-full px-3.5 py-2 rounded-lg border transition-all duration-200 focus:ring-2 focus:ring-offset-2 ${darkMode
-                        ? 'bg-gray-700 border-gray-600 text-white focus:border-indigo-500 focus:ring-indigo-500/20'
-                        : 'bg-white border-gray-300 text-gray-900 focus:border-indigo-500 focus:ring-indigo-500/20'
-                        }`}
-                      placeholder="https://linkedin.com/company/your-startup"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white rounded-lg font-medium 
-                  transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
-                  disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Join WhatsApp Community
-              </button>
-
-              {/* Footer Text */}
-              <p className={`text-center text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                By joining, you&lsquo;ll be connected with fellow founders and investors
-              </p>
-            </form>
           </div>
         </div>
       )}
